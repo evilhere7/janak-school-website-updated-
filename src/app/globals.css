@@ -1,9 +1,234 @@
 @import "tailwindcss";
 
+/* ─── JHSS 2.0 Design Tokens ─── */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  /* School Colors */
+  --navy: #0f2044;
+  --navy-light: #1a3366;
+  --navy-dark: #081428;
+  --gold: #c8921a;
+  --gold-light: #e8b44a;
+  --gold-lighter: #f5d680;
+  --crimson: #9b1d1d;
+
+  /* Neutrals */
+  --white: #ffffff;
+  --off-white: #f8f7f4;
+  --gray-50: #f9fafb;
+  --gray-100: #f3f4f6;
+  --gray-200: #e5e7eb;
+  --gray-300: #d1d5db;
+  --gray-400: #9ca3af;
+  --gray-500: #6b7280;
+  --gray-700: #374151;
+  --gray-900: #111827;
+
+  /* Semantic */
+  --background: var(--white);
+  --foreground: var(--navy-dark);
+  --surface: var(--off-white);
+  --border: var(--gray-200);
+  --text-muted: var(--gray-500);
+
+  /* Shadows */
+  --shadow-sm: 0 1px 3px rgba(0,0,0,0.08);
+  --shadow-md: 0 4px 20px rgba(0,0,0,0.10);
+  --shadow-lg: 0 10px 40px rgba(0,0,0,0.12);
+  --shadow-xl: 0 20px 60px rgba(0,0,0,0.15);
+  --shadow-navy: 0 8px 32px rgba(15,32,68,0.18);
+  --shadow-gold: 0 8px 32px rgba(200,146,26,0.25);
+
+  /* Typography */
+  --font-sans: "Inter", system-ui, sans-serif;
+  --font-display: "Playfair Display", Georgia, serif;
+
+  /* Spacing / Radii */
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 20px;
+  --radius-xl: 28px;
+  --radius-full: 9999px;
+
+  /* Transitions */
+  --transition-fast: 150ms cubic-bezier(0.4,0,0.2,1);
+  --transition-base: 300ms cubic-bezier(0.4,0,0.2,1);
+  --transition-slow: 500ms cubic-bezier(0.4,0,0.2,1);
 }
+
+/* ─── Base ─── */
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+  font-size: 16px;
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-sans);
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* ─── Tailwind theme tokens ─── */
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-sans);
+}
+
+/* ─── Keyframes ─── */
+@keyframes fade-up {
+  from { opacity: 0; transform: translateY(24px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes fade-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+@keyframes slide-in-left {
+  from { opacity: 0; transform: translateX(-32px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+@keyframes float {
+  0%, 100% { transform: translateY(0px); }
+  50%       { transform: translateY(-10px); }
+}
+@keyframes shimmer {
+  0%   { background-position: -200% 0; }
+  100% { background-position:  200% 0; }
+}
+@keyframes pulse-ring {
+  0%   { transform: scale(0.85); opacity: 1; }
+  100% { transform: scale(1.5);  opacity: 0; }
+}
+@keyframes gradient-shift {
+  0%, 100% { background-position: 0% 50%; }
+  50%       { background-position: 100% 50%; }
+}
+@keyframes scale-in {
+  from { opacity: 0; transform: scale(0.95); }
+  to   { opacity: 1; transform: scale(1); }
+}
+
+/* ─── Animation classes ─── */
+.animate-fade-up     { animation: fade-up 0.6s ease forwards; }
+.animate-fade-in     { animation: fade-in 0.4s ease forwards; }
+.animate-slide-left  { animation: slide-in-left 0.6s ease forwards; }
+.animate-float       { animation: float 4s ease-in-out infinite; }
+.animate-scale-in    { animation: scale-in 0.4s ease forwards; }
+.animate-gradient    { animation: gradient-shift 6s ease infinite; background-size: 200% 200%; }
+
+.animation-delay-100 { animation-delay: 100ms; }
+.animation-delay-200 { animation-delay: 200ms; }
+.animation-delay-300 { animation-delay: 300ms; }
+.animation-delay-400 { animation-delay: 400ms; }
+.animation-delay-500 { animation-delay: 500ms; }
+
+/* ─── Utility classes ─── */
+.font-display { font-family: var(--font-display); }
+
+.text-gradient-gold {
+  background: linear-gradient(135deg, var(--gold) 0%, var(--gold-light) 50%, var(--gold-lighter) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.text-gradient-navy {
+  background: linear-gradient(135deg, var(--navy) 0%, var(--navy-light) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.bg-navy     { background-color: var(--navy); }
+.bg-navy-dark { background-color: var(--navy-dark); }
+.bg-gold     { background-color: var(--gold); }
+.text-navy   { color: var(--navy); }
+.text-gold   { color: var(--gold); }
+.text-gold-light { color: var(--gold-light); }
+
+.hero-gradient {
+  background: linear-gradient(
+    135deg,
+    var(--navy-dark) 0%,
+    var(--navy) 40%,
+    #1e3a6e 70%,
+    var(--navy-dark) 100%
+  );
+}
+
+.card-hover {
+  transition: transform var(--transition-base), box-shadow var(--transition-base);
+}
+.card-hover:hover {
+  transform: translateY(-6px);
+  box-shadow: var(--shadow-xl);
+}
+
+.gold-border-gradient {
+  border-image: linear-gradient(135deg, var(--gold), var(--gold-light)) 1;
+}
+
+.glass {
+  background: rgba(255,255,255,0.08);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255,255,255,0.12);
+}
+
+.glass-dark {
+  background: rgba(15,32,68,0.7);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(200,146,26,0.15);
+}
+
+/* ─── Section layout ─── */
+.section-padding { padding: 5rem 1.5rem; }
+@media (min-width: 768px) {
+  .section-padding { padding: 7rem 2rem; }
+}
+@media (min-width: 1280px) {
+  .section-padding { padding: 8rem 0; }
+}
+
+/* ─── Scrollbar ─── */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: var(--gray-100); }
+::-webkit-scrollbar-thumb {
+  background: var(--navy-light);
+  border-radius: var(--radius-full);
+}
+::-webkit-scrollbar-thumb:hover { background: var(--gold); }
+
+/* ─── Focus rings ─── */
+:focus-visible {
+  outline: 2px solid var(--gold);
+  outline-offset: 3px;
+  border-radius: var(--radius-sm);
+}
+
+/* ─── Reduced motion ─── */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* ─── Selection ─── */
+::selection {
+  background: var(--gold-lighter);
+  color: var(--navy-dark);
+}
+
 
 @theme inline {
   --color-background: var(--background);
