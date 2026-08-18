@@ -18,6 +18,7 @@ import {
   ShieldCheck,
 } from "lucide-react";
 import { SCHOOL_INFO } from "@/lib/data/schoolData";
+import { resultService, type MarksheetResult } from "@/services/resultService";
 
 export default function StudentPortalPage() {
   const [activeTab, setActiveTab] = useState<"result" | "login">("result");
@@ -27,36 +28,26 @@ export default function StudentPortalPage() {
   const [dob, setDob] = useState("");
   const [examType, setExamType] = useState("SEE Pre-Board 2083");
   const [searched, setSearched] = useState(false);
-  const [resultData, setResultData] = useState<any | null>(null);
+  const [searching, setSearching] = useState(false);
+  const [resultData, setResultData] = useState<MarksheetResult | null>(null);
 
   // Login State
   const [studentId, setStudentId] = useState("");
   const [password, setPassword] = useState("");
   const [loginError, setLoginError] = useState("");
 
-  const handleResultSearch = (e: React.FormEvent) => {
+  const handleResultSearch = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!symbolNumber.trim()) return;
 
-    // Simulated result lookup
+    setSearching(true);
     setSearched(true);
-    setResultData({
-      studentName: "Aarav Sharma",
-      symbolNo: symbolNumber.toUpperCase(),
-      dob: dob || "2066-04-15",
-      school: SCHOOL_INFO.name,
-      grade: "Class 10 (English Medium)",
-      gpa: "3.85",
-      gradeLetter: "A+",
-      subjects: [
-        { name: "Compulsory English", credit: 4.0, grade: "A+" },
-        { name: "Compulsory Mathematics", credit: 4.0, grade: "A+" },
-        { name: "Science & Technology", credit: 4.0, grade: "A" },
-        { name: "Compulsory Nepali", credit: 4.0, grade: "A" },
-        { name: "Social Studies", credit: 4.0, grade: "A+" },
-        { name: "Optional Computer Science", credit: 4.0, grade: "A+" },
-      ],
-    });
+    try {
+      const data = await resultService.getResultBySymbol(symbolNumber, examType);
+      setResultData(data);
+    } finally {
+      setSearching(false);
+    }
   };
 
   return (

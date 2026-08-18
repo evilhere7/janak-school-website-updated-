@@ -147,6 +147,7 @@ export default function RegisterPage() {
                   src="/assets/logo/jhss-logo3_1.png"
                   alt="JHSS Logo"
                   fill
+                  sizes="56px"
                   className="object-contain p-1"
                 />
               </div>

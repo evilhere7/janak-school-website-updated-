@@ -71,6 +71,7 @@ function LoginForm() {
               src="/assets/logo/jhss-logo3_1.png"
               alt="JHSS Logo"
               fill
+              sizes="64px"
               className="object-contain p-1"
             />
           </div>

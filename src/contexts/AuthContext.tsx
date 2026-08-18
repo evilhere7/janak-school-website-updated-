@@ -12,6 +12,7 @@ import {
 } from "firebase/auth";
 import { doc, getDoc, setDoc, updateDoc, serverTimestamp } from "firebase/firestore";
 import { auth, db } from "@/config/firebase";
+import { profileService } from "@/services/profileService";
 import type { UserProfile, AuthContextType, UserRole } from "@/types/auth";
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -47,35 +48,74 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
 
-  // Fetch or sync user profile from Firestore
+  // Fetch or sync user profile from Firestore with Supabase & local fallback
   const fetchUserProfile = useCallback(async (firebaseUser: FirebaseUser) => {
     try {
-      const userDocRef = doc(db, "users", firebaseUser.uid);
-      const userDocSnap = await getDoc(userDocRef);
-
-      if (userDocSnap.exists()) {
-        const data = userDocSnap.data() as UserProfile;
-        setUserProfile(data);
-      } else {
-        // Fallback default profile if not present in Firestore
-        const defaultProfile: UserProfile = {
+      // 1. Try fetching from Supabase first
+      const supabaseProfile = await profileService.getProfileByFirebaseUid(firebaseUser.uid);
+      if (supabaseProfile) {
+        setUserProfile({
           uid: firebaseUser.uid,
-          email: firebaseUser.email || "",
-          fullName: firebaseUser.displayName || firebaseUser.email?.split("@")[0] || "JHSS Member",
-          role: "student",
-          photoURL: firebaseUser.photoURL || null,
-          createdAt: new Date().toISOString(),
-          isActive: true,
-        };
-        await setDoc(userDocRef, {
-          ...defaultProfile,
-          serverCreated: serverTimestamp(),
+          email: supabaseProfile.email,
+          fullName: supabaseProfile.full_name,
+          role: supabaseProfile.role,
+          photoURL: supabaseProfile.profile_photo_url,
+          phoneNumber: supabaseProfile.phone || undefined,
         });
-        setUserProfile(defaultProfile);
+        return;
       }
+
+      // 2. Try Firestore
+      try {
+        const userDocRef = doc(db, "users", firebaseUser.uid);
+        const userDocSnap = await getDoc(userDocRef);
+
+        if (userDocSnap.exists()) {
+          const data = userDocSnap.data() as UserProfile;
+          setUserProfile(data);
+
+          // Async sync to Supabase
+          profileService.syncProfileWithFirebase(firebaseUser.uid, {
+            fullName: data.fullName,
+            email: data.email,
+            role: data.role,
+            phone: data.phoneNumber,
+            photoURL: data.photoURL,
+            studentId: data.studentId,
+            grade: data.grade,
+            employeeId: data.employeeId,
+            department: data.department,
+            wardName: data.wardName,
+            wardStudentId: data.wardStudentId,
+          }).catch(() => {});
+          return;
+        }
+      } catch (firestoreErr: any) {
+        // Firestore offline / uninitialized in console - silently use local auth user profile
+        console.debug("Firestore offline notice, using auth profile:", firestoreErr?.message);
+      }
+
+      // 3. Fallback standard profile from Firebase User credentials
+      const fallbackProfile: UserProfile = {
+        uid: firebaseUser.uid,
+        email: firebaseUser.email || "",
+        fullName: firebaseUser.displayName || firebaseUser.email?.split("@")[0] || "JHSS Member",
+        role: "student",
+        photoURL: firebaseUser.photoURL || null,
+        createdAt: new Date().toISOString(),
+        isActive: true,
+      };
+
+      setUserProfile(fallbackProfile);
+
+      // Attempt background sync to Supabase
+      profileService.syncProfileWithFirebase(firebaseUser.uid, {
+        fullName: fallbackProfile.fullName,
+        email: fallbackProfile.email,
+        role: fallbackProfile.role,
+      }).catch(() => {});
     } catch (error) {
-      console.error("Error fetching Firestore user profile:", error);
-      // Fallback local memory profile
+      // Clean fallback
       setUserProfile({
         uid: firebaseUser.uid,
         email: firebaseUser.email || "",
@@ -144,6 +184,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       await setDoc(doc(db, "users", newUser.uid), {
         ...newProfile,
         serverTimestamp: serverTimestamp(),
+      });
+
+      // Sync to Supabase PostgreSQL database
+      await profileService.syncProfileWithFirebase(newUser.uid, {
+        fullName: profileData.fullName,
+        email: newProfile.email,
+        role: profileData.role,
+        phone: profileData.phoneNumber,
+        studentId: profileData.studentId,
+        grade: profileData.grade,
+        employeeId: profileData.employeeId,
+        department: profileData.department,
+        wardName: profileData.wardName,
+        wardStudentId: profileData.wardStudentId,
       });
 
       setUserProfile(newProfile);

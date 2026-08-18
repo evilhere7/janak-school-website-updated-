@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import {
@@ -14,14 +14,26 @@ import {
   ArrowRight,
   Plus,
 } from "lucide-react";
-import { EVENTS } from "@/lib/data/schoolData";
+import { eventService, type SchoolEvent } from "@/services/eventService";
 
 const CATEGORIES = ["All", "Upcoming", "Past Events", "Sports", "Academic", "Cultural", "Community"];
 
 export default function EventsPage() {
+  const [events, setEvents] = useState<SchoolEvent[]>([]);
+  const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState("All");
 
-  const filteredEvents = EVENTS.filter((event) => {
+  useEffect(() => {
+    async function loadEvents() {
+      setLoading(true);
+      const data = await eventService.getEvents();
+      setEvents(data);
+      setLoading(false);
+    }
+    loadEvents();
+  }, []);
+
+  const filteredEvents = events.filter((event) => {
     if (activeTab === "All") return true;
     if (activeTab === "Upcoming") return event.isUpcoming;
     if (activeTab === "Past Events") return !event.isUpcoming;

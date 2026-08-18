@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import {
@@ -16,40 +16,29 @@ import {
   ChevronRight,
   Sparkles,
 } from "lucide-react";
-import { NOTICES, SCHOOL_INFO } from "@/lib/data/schoolData";
-
-// Extended notices list
-const ALL_NOTICES = [
-  ...NOTICES,
-  {
-    id: "not-05",
-    title: "Scholarship Scheme Application for Needy & Meritorious Students (2083)",
-    category: "ADMISSION" as const,
-    isImportant: true,
-    date: "2026-08-12",
-    description:
-      "Shree Janak Secondary School invites scholarship applications under the Government quota and Founder Late Surya Bhakta Adhikari Memorial Trust for deserving students.",
-    pdfUrl: "/assets/campus/cover-page_15.jpg",
-  },
-  {
-    id: "not-06",
-    title: "Notice regarding School Uniform and Textbooks Distribution",
-    category: "GENERAL" as const,
-    isImportant: false,
-    date: "2026-07-02",
-    description:
-      "Government-funded free textbooks distribution for Class 1 to 10 will take place in Jhapardi and Saraswati blocks starting Sunday.",
-  },
-];
+import { SCHOOL_INFO } from "@/lib/data/schoolData";
+import { noticeService, type SchoolNotice } from "@/services/noticeService";
 
 const CATEGORIES = ["ALL", "ADMISSION", "EXAM", "TENDER", "GENERAL"];
 
 export default function NoticesPage() {
+  const [notices, setNotices] = useState<SchoolNotice[]>([]);
+  const [loading, setLoading] = useState(true);
   const [selectedCategory, setSelectedCategory] = useState("ALL");
   const [searchQuery, setSearchQuery] = useState("");
-  const [selectedNotice, setSelectedNotice] = useState<(typeof ALL_NOTICES)[0] | null>(null);
+  const [selectedNotice, setSelectedNotice] = useState<SchoolNotice | null>(null);
 
-  const filteredNotices = ALL_NOTICES.filter((notice) => {
+  useEffect(() => {
+    async function loadNotices() {
+      setLoading(true);
+      const data = await noticeService.getNotices();
+      setNotices(data);
+      setLoading(false);
+    }
+    loadNotices();
+  }, []);
+
+  const filteredNotices = notices.filter((notice) => {
     const matchesCategory = selectedCategory === "ALL" || notice.category === selectedCategory;
     const matchesSearch =
       notice.title.toLowerCase().includes(searchQuery.toLowerCase()) ||

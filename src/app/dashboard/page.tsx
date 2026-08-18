@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -31,6 +31,8 @@ import {
 import { useAuth } from "@/contexts/AuthContext";
 import ProtectedRoute from "@/components/auth/ProtectedRoute";
 import { SCHOOL_INFO, NOTICES, STATS } from "@/lib/data/schoolData";
+import { studentService, type StudentTask } from "@/services/studentService";
+import { noticeService } from "@/services/noticeService";
 
 export default function DashboardPage() {
   return (
@@ -117,6 +119,20 @@ function DashboardContent() {
 
 // ─── 1. Student Dashboard View ──────────────────────────────
 function StudentView({ userProfile }: { userProfile: any }) {
+  const [tasks, setTasks] = useState<StudentTask[]>([]);
+
+  useEffect(() => {
+    studentService.getAssignments().then(setTasks);
+  }, []);
+
+  const handleToggleTask = async (task: StudentTask) => {
+    const updatedStatus = !task.isCompleted;
+    setTasks((prev) =>
+      prev.map((t) => (t.id === task.id ? { ...t, isCompleted: updatedStatus } : t))
+    );
+    await studentService.toggleAssignment(task.id, updatedStatus);
+  };
+
   return (
     <div className="space-y-8 animate-fade-up">
       {/* Metrics Bar */}
@@ -150,9 +166,9 @@ function StudentView({ userProfile }: { userProfile: any }) {
         <div className="bg-white rounded-2xl p-5 border border-gray-100 shadow-sm">
           <span className="text-xs text-gray-500 font-medium block">Pending Assignments</span>
           <div className="font-display font-bold text-navy text-xl mt-1 text-crimson">
-            2 Due
+            {tasks.filter((t) => !t.isCompleted).length} Due
           </div>
-          <span className="text-[11px] text-gray-400 mt-1 block">Maths & Physics practicals</span>
+          <span className="text-[11px] text-gray-400 mt-1 block">Active assignments</span>
         </div>
       </div>
 
@@ -191,31 +207,28 @@ function StudentView({ userProfile }: { userProfile: any }) {
               <BookOpen size={18} className="text-gold" /> Homework & Study Tasks
             </h3>
             <div className="space-y-3">
-              {[
-                { title: "Algebra Chapter 4: Matrix Transformations Exercises", subject: "Mathematics", due: "Tomorrow, 10:00 AM", done: false },
-                { title: "Biology Lab Report: Microscope Specimen Analysis", subject: "Science", due: "Friday, 1:00 PM", done: false },
-                { title: "Nepali Essay: राष्ट्र निर्माणमा युवाको भूमिका", subject: "Nepali", due: "Completed", done: true },
-              ].map((task, idx) => (
+              {tasks.map((task) => (
                 <div
-                  key={idx}
-                  className={`p-4 rounded-2xl border flex items-center justify-between gap-4 ${
-                    task.done ? "bg-gray-50/60 border-gray-100 opacity-60" : "bg-white border-gray-200"
+                  key={task.id}
+                  onClick={() => handleToggleTask(task)}
+                  className={`p-4 rounded-2xl border flex items-center justify-between gap-4 cursor-pointer transition-all ${
+                    task.isCompleted ? "bg-gray-50/60 border-gray-100 opacity-60" : "bg-white border-gray-200 hover:border-gold"
                   }`}
                 >
                   <div className="flex items-start gap-3">
                     <CheckCircle2
                       size={18}
-                      className={task.done ? "text-green-600 mt-0.5" : "text-gray-300 mt-0.5"}
+                      className={task.isCompleted ? "text-green-600 mt-0.5" : "text-gray-300 mt-0.5"}
                     />
                     <div>
-                      <div className={`font-bold text-xs sm:text-sm ${task.done ? "line-through text-gray-500" : "text-navy"}`}>
+                      <div className={`font-bold text-xs sm:text-sm ${task.isCompleted ? "line-through text-gray-500" : "text-navy"}`}>
                         {task.title}
                       </div>
                       <div className="text-[11px] text-gray-400">{task.subject}</div>
                     </div>
                   </div>
-                  <span className={`text-[11px] font-semibold px-2.5 py-1 rounded-lg ${task.done ? "bg-green-100 text-green-800" : "bg-amber-100 text-amber-900"}`}>
-                    {task.due}
+                  <span className={`text-[11px] font-semibold px-2.5 py-1 rounded-lg ${task.isCompleted ? "bg-green-100 text-green-800" : "bg-amber-100 text-amber-900"}`}>
+                    {task.dueDate}
                   </span>
                 </div>
               ))}
@@ -278,17 +291,30 @@ function StudentView({ userProfile }: { userProfile: any }) {
 
 // ─── 2. Teacher Dashboard View ──────────────────────────────
 function TeacherView({ userProfile }: { userProfile: any }) {
+  const [noticeTitle, setNoticeTitle] = useState("");
   const [noticeText, setNoticeText] = useState("");
   const [noticeSent, setNoticeSent] = useState(false);
+  const [isPublishing, setIsPublishing] = useState(false);
 
-  const handleBroadcast = (e: React.FormEvent) => {
+  const handleBroadcast = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!noticeText.trim()) return;
+    setIsPublishing(true);
+
+    await noticeService.publishNotice({
+      title: noticeTitle.trim() || "Important Class Announcement",
+      description: noticeText.trim(),
+      category: "GENERAL",
+      isImportant: true,
+    });
+
+    setIsPublishing(false);
     setNoticeSent(true);
     setTimeout(() => {
+      setNoticeTitle("");
       setNoticeText("");
       setNoticeSent(false);
-    }, 3000);
+    }, 3500);
   };
 
   return (
