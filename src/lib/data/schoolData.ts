@@ -321,3 +321,67 @@ export const STATS = [
   { label: "Years of Excellence", value: "65+", icon: "Star" },
   { label: "SEE Pass Rate", value: "100%", icon: "Award" },
 ];
+
+export const EVENTS = [
+  {
+    id: "evt-1",
+    title: "Annual Sports Meet & Athletics Championship 2083",
+    category: "Sports",
+    date: "2026-09-15",
+    time: "09:00 AM - 04:00 PM",
+    venue: "JHSS Main Athletic Ground",
+    description:
+      "Inter-house track and field events, volleyball tournaments, table tennis, and traditional games for students across all grade levels.",
+    isUpcoming: true,
+    image: "/assets/gallery/cultural-program2_34.jpg",
+  },
+  {
+    id: "evt-2",
+    title: "Science & ICT Innovation Exhibition",
+    category: "Academic",
+    date: "2026-10-05",
+    time: "10:00 AM - 03:30 PM",
+    venue: "Saraswati Block & ICT Lab",
+    description:
+      "Showcasing student-built STEM projects, robotics models, coding solutions, and environmental science working models.",
+    isUpcoming: true,
+    image: "/assets/facilities/WhatsApp-Image-2024-05-16-at-4.35.18-PM-1_7.jpeg",
+  },
+  {
+    id: "evt-3",
+    title: "Parents' Day & Grand Cultural Festival 2083",
+    category: "Cultural",
+    date: "2026-11-20",
+    time: "10:30 AM - 04:30 PM",
+    venue: "Model School Congress Chowk Auditorium",
+    description:
+      "Annual celebration featuring classical Nepalese folk dances, musical presentations, academic prize distribution, and annual school progress review.",
+    isUpcoming: true,
+    image: "/assets/gallery/cultural-program3_35.jpg",
+  },
+  {
+    id: "evt-4",
+    title: "Golden Jubilee Celebration & Alumni Meet",
+    category: "Milestone",
+    date: "2024-01-20",
+    time: "10:00 AM - 05:00 PM",
+    venue: "JHSS Main Campus",
+    description:
+      "Commemoration of 50+ glorious years of educational excellence with dignitaries, alumni leaders, and cultural presentations.",
+    isUpcoming: false,
+    image: "/assets/gallery/golden-jubilee_30.jpg",
+  },
+  {
+    id: "evt-5",
+    title: "Youth Red Cross Blood Donation & Health Camp",
+    category: "Community",
+    date: "2024-09-02",
+    time: "08:30 AM - 02:00 PM",
+    venue: "Jhapardi Primary Block",
+    description:
+      "Free medical checkups and blood donation drive in partnership with Nepal Red Cross Society Gaindakot.",
+    isUpcoming: false,
+    image: "/assets/gallery/blood-donation_29.jpg",
+  },
+];
+
