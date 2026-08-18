@@ -3,9 +3,21 @@
 import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { Menu, X, ChevronDown, Phone, Mail, GraduationCap } from "lucide-react";
+import {
+  Menu,
+  X,
+  ChevronDown,
+  Phone,
+  Mail,
+  GraduationCap,
+  User,
+  LogOut,
+  LayoutDashboard,
+  Sparkles,
+} from "lucide-react";
 import { cn } from "@/lib/utils";
 import { SCHOOL_INFO } from "@/lib/data/schoolData";
+import { useAuth } from "@/contexts/AuthContext";
 
 const NAV_LINKS = [
   { label: "Home", href: "/" },
@@ -46,9 +58,11 @@ const NAV_LINKS = [
 ];
 
 export default function Navbar() {
+  const { user, userProfile, logout } = useAuth();
   const [isScrolled, setIsScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [openDropdown, setOpenDropdown] = useState<string | null>(null);
+  const [userDropdownOpen, setUserDropdownOpen] = useState(false);
 
   const handleScroll = useCallback(() => {
     setIsScrolled(window.scrollY > 20);
@@ -65,8 +79,16 @@ export default function Navbar() {
     } else {
       document.body.style.overflow = "";
     }
-    return () => { document.body.style.overflow = ""; };
+    return () => {
+      document.body.style.overflow = "";
+    };
   }, [mobileOpen]);
+
+  const handleLogout = async () => {
+    setUserDropdownOpen(false);
+    setMobileOpen(false);
+    await logout();
+  };
 
   return (
     <>
@@ -74,14 +96,22 @@ export default function Navbar() {
       <div className="bg-navy text-white text-sm py-2 hidden md:block">
         <div className="max-w-7xl mx-auto px-6 flex items-center justify-between">
           <div className="flex items-center gap-6">
-            <a href={`tel:${SCHOOL_INFO.phones[0]}`} className="flex items-center gap-1.5 hover:text-gold-light transition-colors">
+            <a
+              href={`tel:${SCHOOL_INFO.phones[0]}`}
+              className="flex items-center gap-1.5 hover:text-gold-light transition-colors"
+            >
               <Phone size={13} /> {SCHOOL_INFO.phones[0]}
             </a>
-            <a href={`mailto:${SCHOOL_INFO.emails[1]}`} className="flex items-center gap-1.5 hover:text-gold-light transition-colors">
+            <a
+              href={`mailto:${SCHOOL_INFO.emails[1]}`}
+              className="flex items-center gap-1.5 hover:text-gold-light transition-colors"
+            >
               <Mail size={13} /> {SCHOOL_INFO.emails[1]}
             </a>
           </div>
-          <span className="text-white/60 font-medium tracking-wide">{SCHOOL_INFO.location}</span>
+          <span className="text-white/60 font-medium tracking-wide">
+            {SCHOOL_INFO.location}
+          </span>
         </div>
       </div>
 
@@ -94,7 +124,11 @@ export default function Navbar() {
             : "bg-white shadow-sm"
         )}
       >
-        <nav className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8" role="navigation" aria-label="Main navigation">
+        <nav
+          className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8"
+          role="navigation"
+          aria-label="Main navigation"
+        >
           <div className="flex items-center justify-between h-18 py-3">
             {/* Logo */}
             <Link href="/" className="flex items-center gap-3 group" aria-label="JHSS Home">
@@ -129,7 +163,7 @@ export default function Navbar() {
                   <Link
                     href={link.href}
                     className={cn(
-                      "flex items-center gap-1 px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200",
+                      "flex items-center gap-1 px-3.5 py-2 rounded-lg text-sm font-medium transition-all duration-200",
                       "text-gray-700 hover:text-navy hover:bg-navy/5"
                     )}
                   >
@@ -166,16 +200,102 @@ export default function Navbar() {
               ))}
             </div>
 
-            {/* CTA + Mobile Menu toggle */}
+            {/* Authentication & User Controls */}
             <div className="flex items-center gap-3">
-              <Link
-                href="/portal/student"
-                className="hidden sm:flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-semibold text-white bg-navy hover:bg-navy-light shadow-navy transition-all duration-200 hover:shadow-lg hover:-translate-y-0.5"
-                id="student-portal-btn"
-              >
-                <GraduationCap size={15} />
-                Student Portal
-              </Link>
+              {user ? (
+                /* Authenticated User Menu */
+                <div className="relative">
+                  <button
+                    onClick={() => setUserDropdownOpen(!userDropdownOpen)}
+                    className="flex items-center gap-2.5 p-1.5 pr-3 rounded-full border border-gray-200 bg-gray-50 hover:bg-gray-100 transition-all cursor-pointer"
+                  >
+                    <div className="w-8 h-8 rounded-full bg-navy text-gold-light flex items-center justify-center text-xs font-bold font-display shadow-sm">
+                      {userProfile?.photoURL ? (
+                        <Image
+                          src={userProfile.photoURL}
+                          alt="Avatar"
+                          width={32}
+                          height={32}
+                          className="rounded-full object-cover"
+                        />
+                      ) : (
+                        (userProfile?.fullName || user.email || "U").charAt(0).toUpperCase()
+                      )}
+                    </div>
+                    <div className="hidden sm:block text-left">
+                      <div className="text-xs font-bold text-navy leading-tight truncate max-w-[120px]">
+                        {userProfile?.fullName || "Account"}
+                      </div>
+                      <div className="text-[10px] font-semibold text-gold uppercase leading-tight">
+                        {userProfile?.role || "Member"}
+                      </div>
+                    </div>
+                    <ChevronDown size={14} className="text-gray-500" />
+                  </button>
+
+                  {userDropdownOpen && (
+                    <div className="absolute right-0 mt-2 w-56 bg-white rounded-2xl shadow-2xl border border-gray-100 py-2 z-50 animate-scale-in">
+                      <div className="px-4 py-2.5 border-b border-gray-100">
+                        <div className="font-bold text-navy text-sm truncate">
+                          {userProfile?.fullName || user.displayName || "User"}
+                        </div>
+                        <div className="text-gray-400 text-xs truncate">{user.email}</div>
+                        <span className="inline-block mt-1 px-2 py-0.5 rounded bg-gold/10 text-gold text-[10px] font-bold uppercase">
+                          {userProfile?.role || "student"}
+                        </span>
+                      </div>
+
+                      <Link
+                        href="/dashboard"
+                        className="flex items-center gap-2.5 px-4 py-2.5 text-sm text-gray-700 hover:text-navy hover:bg-navy/5 transition-colors font-medium"
+                        onClick={() => setUserDropdownOpen(false)}
+                      >
+                        <LayoutDashboard size={16} className="text-navy" />
+                        My Dashboard
+                      </Link>
+
+                      <Link
+                        href="/portal/student"
+                        className="flex items-center gap-2.5 px-4 py-2.5 text-sm text-gray-700 hover:text-navy hover:bg-navy/5 transition-colors font-medium"
+                        onClick={() => setUserDropdownOpen(false)}
+                      >
+                        <GraduationCap size={16} className="text-navy" />
+                        Student Marksheet
+                      </Link>
+
+                      <div className="border-t border-gray-100 my-1" />
+
+                      <button
+                        onClick={handleLogout}
+                        className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-crimson hover:bg-red-50 transition-colors font-medium text-left cursor-pointer"
+                      >
+                        <LogOut size={16} />
+                        Sign Out
+                      </button>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                /* Unauthenticated Buttons */
+                <div className="flex items-center gap-2">
+                  <Link
+                    href="/login"
+                    className="hidden sm:inline-flex items-center gap-1.5 px-4 py-2 rounded-full text-xs font-bold text-navy hover:text-gold hover:bg-navy/5 transition-colors"
+                  >
+                    <User size={14} /> Sign In
+                  </Link>
+                  <Link
+                    href="/register"
+                    className="hidden sm:flex items-center gap-2 px-5 py-2.5 rounded-full text-xs font-bold text-white bg-navy hover:bg-gold shadow-navy transition-all duration-200 hover:shadow-lg hover:-translate-y-0.5 cursor-pointer"
+                    id="student-portal-btn"
+                  >
+                    <Sparkles size={14} className="text-gold-light" />
+                    Register
+                  </Link>
+                </div>
+              )}
+
+              {/* Mobile menu toggle */}
               <button
                 className="lg:hidden p-2 rounded-lg text-gray-700 hover:bg-gray-100 transition-colors"
                 onClick={() => setMobileOpen(!mobileOpen)}
@@ -226,12 +346,33 @@ export default function Navbar() {
           </div>
 
           <div className="flex-1 overflow-y-auto py-4 px-3">
+            {/* User card if logged in */}
+            {user && (
+              <div className="mb-4 p-3 bg-gray-50 rounded-2xl border border-gray-100">
+                <div className="font-bold text-navy text-sm">
+                  {userProfile?.fullName || user.email}
+                </div>
+                <div className="text-xs text-gold font-semibold uppercase">
+                  {userProfile?.role || "Member"}
+                </div>
+                <Link
+                  href="/dashboard"
+                  className="mt-2 block text-xs font-bold text-navy hover:underline"
+                  onClick={() => setMobileOpen(false)}
+                >
+                  Go to Dashboard &rarr;
+                </Link>
+              </div>
+            )}
+
             {NAV_LINKS.map((link) => (
               <div key={link.label}>
                 <Link
                   href={link.href}
                   className="flex items-center justify-between px-4 py-3 rounded-lg text-sm font-medium text-gray-800 hover:text-navy hover:bg-navy/5 transition-colors"
-                  onClick={() => { if (!link.children) setMobileOpen(false); }}
+                  onClick={() => {
+                    if (!link.children) setMobileOpen(false);
+                  }}
                 >
                   {link.label}
                 </Link>
@@ -254,16 +395,36 @@ export default function Navbar() {
           </div>
 
           <div className="p-5 border-t border-gray-100 space-y-3">
-            <Link
-              href="/portal/student"
-              className="flex items-center justify-center gap-2 w-full px-5 py-3 rounded-full text-sm font-semibold text-white bg-navy hover:bg-navy-light transition-colors"
-              onClick={() => setMobileOpen(false)}
-            >
-              <GraduationCap size={15} />
-              Student Portal
-            </Link>
-            <div className="text-xs text-gray-500 text-center space-y-1">
-              <p>{SCHOOL_INFO.phones[0]} | {SCHOOL_INFO.phones[1]}</p>
+            {user ? (
+              <button
+                onClick={handleLogout}
+                className="flex items-center justify-center gap-2 w-full px-5 py-3 rounded-full text-sm font-semibold text-white bg-crimson hover:bg-red-700 transition-colors cursor-pointer"
+              >
+                <LogOut size={16} />
+                Sign Out
+              </button>
+            ) : (
+              <div className="space-y-2">
+                <Link
+                  href="/login"
+                  className="flex items-center justify-center gap-2 w-full px-5 py-2.5 rounded-full text-sm font-semibold text-navy bg-gray-100 hover:bg-gray-200 transition-colors"
+                  onClick={() => setMobileOpen(false)}
+                >
+                  <User size={15} />
+                  Sign In
+                </Link>
+                <Link
+                  href="/register"
+                  className="flex items-center justify-center gap-2 w-full px-5 py-2.5 rounded-full text-sm font-semibold text-white bg-navy hover:bg-navy-light transition-colors"
+                  onClick={() => setMobileOpen(false)}
+                >
+                  <Sparkles size={15} className="text-gold-light" />
+                  Create Account
+                </Link>
+              </div>
+            )}
+            <div className="text-xs text-gray-500 text-center space-y-1 pt-2">
+              <p>{SCHOOL_INFO.phones[0]}</p>
               <p>{SCHOOL_INFO.emails[1]}</p>
             </div>
           </div>

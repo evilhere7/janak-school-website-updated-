@@ -1,0 +1,32 @@
+rules_version = '2';
+
+service firebase.storage {
+  match /b/{bucket}/o {
+    
+    // Helper functions
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+    
+    function isValidImage() {
+      return request.resource.contentType.matches('image/.*')
+        && request.resource.size < 5 * 1024 * 1024; // 5MB max
+    }
+
+    // User Avatar uploads
+    match /avatars/{userId}/{fileName} {
+      allow read: if true;
+      allow write: if isOwner(userId) && isValidImage();
+    }
+
+    // Public school documents & notice attachments
+    match /documents/{allPaths=**} {
+      allow read: if true;
+      allow write: if isAuthenticated();
+    }
+  }
+}
