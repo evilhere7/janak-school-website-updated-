@@ -1,6 +1,7 @@
 import { supabase } from "@/lib/supabase";
 import type { NoticeRow } from "@/types/database";
 import { NOTICES } from "@/lib/data/schoolData";
+import { sanitizeHtml, sanitizeText } from "@/lib/security/sanitize";
 
 export interface SchoolNotice {
   id: string;
@@ -24,7 +25,7 @@ export const noticeService = {
         .order("published_at", { ascending: false });
 
       if (category && category !== "ALL") {
-        query = query.eq("category", category);
+        query = query.eq("category", sanitizeText(category));
       }
 
       const { data, error } = await query;
@@ -67,7 +68,7 @@ export const noticeService = {
   },
 
   /**
-   * Publish a new notice to Supabase
+   * Publish a new notice to Supabase with input sanitization
    */
   async publishNotice(notice: {
     title: string;
@@ -77,12 +78,16 @@ export const noticeService = {
     attachmentUrl?: string | null;
   }): Promise<boolean> {
     try {
+      const cleanTitle = sanitizeText(notice.title);
+      const cleanDescription = sanitizeHtml(notice.description);
+      const cleanCategory = sanitizeText(notice.category).toUpperCase();
+
       const { error } = await supabase.from("notices").insert({
-        title: notice.title,
-        description: notice.description,
-        category: notice.category,
+        title: cleanTitle,
+        description: cleanDescription,
+        category: cleanCategory,
         is_important: notice.isImportant || false,
-        attachment_url: notice.attachmentUrl || null,
+        attachment_url: notice.attachmentUrl ? sanitizeText(notice.attachmentUrl) : null,
         published_at: new Date().toISOString().split("T")[0],
       });
 

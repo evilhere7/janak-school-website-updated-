@@ -1,5 +1,8 @@
 import { supabase } from "@/lib/supabase";
 import type { ResultRow } from "@/types/database";
+import { sanitizeText } from "@/lib/security/sanitize";
+import { checkRateLimit } from "@/lib/security/rateLimit";
+import { auditService } from "@/services/auditService";
 
 export interface MarksheetResult {
   studentName: string;
@@ -19,24 +22,38 @@ export interface MarksheetResult {
 
 export const resultService = {
   /**
-   * Search student marksheet by symbol number
+   * Search student marksheet by symbol number with rate limiting and audit logging
    */
   async getResultBySymbol(
     symbolNumber: string,
     examName?: string
   ): Promise<MarksheetResult | null> {
     try {
-      const cleanSymbol = symbolNumber.trim().toUpperCase();
+      const cleanSymbol = sanitizeText(symbolNumber).trim().toUpperCase();
+
+      // Rate limit search requests
+      const rateLimit = checkRateLimit(cleanSymbol || "anonymous", "RESULT_SEARCH");
+      if (!rateLimit.allowed) {
+        throw new Error("Too many search requests. Please wait a moment before trying again.");
+      }
+
       let query = supabase
         .from("results")
         .select("*")
         .ilike("symbol_number", cleanSymbol);
 
       if (examName) {
-        query = query.eq("exam_name", examName);
+        query = query.eq("exam_name", sanitizeText(examName));
       }
 
       const { data, error } = await query.maybeSingle();
+
+      // Audit Log search lookup
+      auditService.logEvent({
+        action: "RESULT_VIEWED",
+        severity: "info",
+        details: { symbolNumber: cleanSymbol, examName },
+      });
 
       if (data && !error) {
         const row = data as ResultRow;
@@ -81,11 +98,11 @@ export const resultService = {
           { name: "Optional Computer Science", credit: 4.0, grade: "A+" },
         ],
       };
-    } catch (err) {
+    } catch (err: any) {
       console.warn("Result search fallback notice:", err);
       return {
         studentName: "Aarav Sharma",
-        symbolNo: symbolNumber.toUpperCase(),
+        symbolNo: sanitizeText(symbolNumber).toUpperCase(),
         dob: "2066-04-15",
         school: "Shree Janak Secondary School",
         grade: "Class 10 (English Medium)",

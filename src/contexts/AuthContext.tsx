@@ -7,13 +7,18 @@ import {
   createUserWithEmailAndPassword,
   signOut,
   sendPasswordResetEmail,
+  sendEmailVerification,
+  reauthenticateWithCredential,
+  EmailAuthProvider,
   updateProfile as updateFirebaseProfile,
   type User as FirebaseUser,
 } from "firebase/auth";
 import { doc, getDoc, setDoc, updateDoc, serverTimestamp } from "firebase/firestore";
 import { auth, db } from "@/config/firebase";
 import { profileService } from "@/services/profileService";
-import type { UserProfile, AuthContextType, UserRole } from "@/types/auth";
+import { auditService } from "@/services/auditService";
+import { checkRateLimit, resetRateLimit } from "@/lib/security/rateLimit";
+import type { UserProfile, AuthContextType } from "@/types/auth";
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
@@ -27,13 +32,13 @@ export function getFriendlyAuthErrorMessage(errorCode: string): string {
     case "auth/email-already-in-use":
       return "An account with this email address already exists. Please log in instead.";
     case "auth/weak-password":
-      return "Password is too weak. Please use at least 6 characters with letters and numbers.";
+      return "Password is too weak. Please use at least 8 characters with uppercase, lowercase, and numbers.";
     case "auth/invalid-email":
       return "Please enter a valid email address.";
     case "auth/user-disabled":
       return "This account has been disabled by the school administrator. Please contact the office.";
     case "auth/too-many-requests":
-      return "Access to this account has been temporarily disabled due to many failed login attempts. You can reset your password or try again later.";
+      return "Access to this account has been temporarily locked due to many failed login attempts. Please reset your password or try again later.";
     case "auth/network-request-failed":
       return "Network connection failed. Please check your internet connectivity.";
     case "auth/requires-recent-login":
@@ -75,23 +80,24 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           setUserProfile(data);
 
           // Async sync to Supabase
-          profileService.syncProfileWithFirebase(firebaseUser.uid, {
-            fullName: data.fullName,
-            email: data.email,
-            role: data.role,
-            phone: data.phoneNumber,
-            photoURL: data.photoURL,
-            studentId: data.studentId,
-            grade: data.grade,
-            employeeId: data.employeeId,
-            department: data.department,
-            wardName: data.wardName,
-            wardStudentId: data.wardStudentId,
-          }).catch(() => {});
+          profileService
+            .syncProfileWithFirebase(firebaseUser.uid, {
+              fullName: data.fullName,
+              email: data.email,
+              role: data.role,
+              phone: data.phoneNumber,
+              photoURL: data.photoURL,
+              studentId: data.studentId,
+              grade: data.grade,
+              employeeId: data.employeeId,
+              department: data.department,
+              wardName: data.wardName,
+              wardStudentId: data.wardStudentId,
+            })
+            .catch(() => {});
           return;
         }
       } catch (firestoreErr: any) {
-        // Firestore offline / uninitialized in console - silently use local auth user profile
         console.debug("Firestore offline notice, using auth profile:", firestoreErr?.message);
       }
 
@@ -109,13 +115,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setUserProfile(fallbackProfile);
 
       // Attempt background sync to Supabase
-      profileService.syncProfileWithFirebase(firebaseUser.uid, {
-        fullName: fallbackProfile.fullName,
-        email: fallbackProfile.email,
-        role: fallbackProfile.role,
-      }).catch(() => {});
-    } catch (error) {
-      // Clean fallback
+      profileService
+        .syncProfileWithFirebase(firebaseUser.uid, {
+          fullName: fallbackProfile.fullName,
+          email: fallbackProfile.email,
+          role: fallbackProfile.role,
+        })
+        .catch(() => {});
+    } catch {
       setUserProfile({
         uid: firebaseUser.uid,
         email: firebaseUser.email || "",
@@ -145,26 +152,66 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return () => unsubscribe();
   }, [fetchUserProfile]);
 
-  // Login handler
+  // Secure Login with Rate Limiting & Audit Logging
   const login = async (email: string, password: string) => {
+    const trimmedEmail = email.trim().toLowerCase();
+
+    // Rate Limit Check
+    const rateLimit = checkRateLimit(trimmedEmail, "LOGIN");
+    if (!rateLimit.allowed) {
+      const minutes = Math.ceil(rateLimit.retryAfterSeconds / 60);
+      const errMsg = `Too many failed login attempts. For security, please wait ${minutes} minute(s) before trying again.`;
+      await auditService.logEvent({
+        action: "RATE_LIMIT_EXCEEDED",
+        userEmail: trimmedEmail,
+        severity: "warning",
+        details: { action: "LOGIN", retryAfterSeconds: rateLimit.retryAfterSeconds },
+      });
+      throw new Error(errMsg);
+    }
+
     setLoading(true);
     try {
-      const userCredential = await signInWithEmailAndPassword(auth, email.trim(), password);
+      const userCredential = await signInWithEmailAndPassword(auth, trimmedEmail, password);
+      
+      // Reset rate limit on successful authentication
+      resetRateLimit(trimmedEmail, "LOGIN");
+
+      // Audit Log Success
+      await auditService.logEvent({
+        action: "LOGIN_SUCCESS",
+        userId: userCredential.user.uid,
+        userEmail: trimmedEmail,
+        severity: "info",
+      });
+
       await fetchUserProfile(userCredential.user);
+    } catch (err: any) {
+      // Audit Log Failure
+      await auditService.logFailedLogin(trimmedEmail, err?.code || err?.message || "Invalid credentials");
+      throw err;
     } finally {
       setLoading(false);
     }
   };
 
-  // Register handler
+  // Secure Registration with Rate Limiting & Audit Logging
   const register = async (
     email: string,
     password: string,
     profileData: Omit<UserProfile, "uid" | "email" | "createdAt" | "updatedAt">
   ) => {
+    const trimmedEmail = email.trim().toLowerCase();
+
+    // Rate Limit Check for registrations
+    const rateLimit = checkRateLimit(trimmedEmail, "REGISTRATION");
+    if (!rateLimit.allowed) {
+      throw new Error("Registration limit exceeded for this session. Please try again later.");
+    }
+
     setLoading(true);
     try {
-      const userCredential = await createUserWithEmailAndPassword(auth, email.trim(), password);
+      const userCredential = await createUserWithEmailAndPassword(auth, trimmedEmail, password);
       const newUser = userCredential.user;
 
       // Update Firebase Auth display name
@@ -176,7 +223,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const newProfile: UserProfile = {
         ...profileData,
         uid: newUser.uid,
-        email: newUser.email || email.trim(),
+        email: newUser.email || trimmedEmail,
         createdAt: new Date().toISOString(),
         isActive: true,
       };
@@ -200,16 +247,34 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         wardStudentId: profileData.wardStudentId,
       });
 
+      // Audit Log Registration
+      await auditService.logEvent({
+        action: "REGISTER_SUCCESS",
+        userId: newUser.uid,
+        userEmail: trimmedEmail,
+        userRole: profileData.role,
+        severity: "info",
+      });
+
       setUserProfile(newProfile);
     } finally {
       setLoading(false);
     }
   };
 
-  // Logout handler
+  // Secure Logout
   const logout = async () => {
+    const currentUser = auth.currentUser;
     setLoading(true);
     try {
+      if (currentUser) {
+        await auditService.logEvent({
+          action: "LOGOUT",
+          userId: currentUser.uid,
+          userEmail: currentUser.email,
+          severity: "info",
+        });
+      }
       await signOut(auth);
       setUser(null);
       setUserProfile(null);
@@ -218,15 +283,51 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-  // Password Reset handler
+  // Password Reset with Rate Limiting
   const resetPassword = async (email: string) => {
-    await sendPasswordResetEmail(auth, email.trim());
+    const trimmedEmail = email.trim().toLowerCase();
+
+    const rateLimit = checkRateLimit(trimmedEmail, "PASSWORD_RESET");
+    if (!rateLimit.allowed) {
+      throw new Error("Too many password reset requests. Please check your inbox or wait before retrying.");
+    }
+
+    await sendPasswordResetEmail(auth, trimmedEmail);
+
+    await auditService.logEvent({
+      action: "PASSWORD_RESET_REQUESTED",
+      userEmail: trimmedEmail,
+      severity: "info",
+    });
+  };
+
+  // Send Email Verification Mail
+  const sendEmailVerificationMail = async () => {
+    if (!auth.currentUser) {
+      throw new Error("No authenticated user found.");
+    }
+    await sendEmailVerification(auth.currentUser);
+    await auditService.logEvent({
+      action: "EMAIL_VERIFICATION_SENT",
+      userId: auth.currentUser.uid,
+      userEmail: auth.currentUser.email,
+      severity: "info",
+    });
+  };
+
+  // Re-authenticate User with Current Password for sensitive operations
+  const reauthenticateUser = async (password: string) => {
+    if (!auth.currentUser || !auth.currentUser.email) {
+      throw new Error("No authenticated user found.");
+    }
+    const credential = EmailAuthProvider.credential(auth.currentUser.email, password);
+    await reauthenticateWithCredential(auth.currentUser, credential);
   };
 
   // Update Profile handler
   const updateProfileData = async (data: Partial<UserProfile>) => {
     if (!user) throw new Error("User must be authenticated to update profile");
-    
+
     const userDocRef = doc(db, "users", user.uid);
     const updated = {
       ...data,
@@ -239,6 +340,29 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       await updateFirebaseProfile(user, { displayName: data.fullName });
     }
 
+    // Sync changes to Supabase
+    await profileService.syncProfileWithFirebase(user.uid, {
+      fullName: data.fullName || userProfile?.fullName || "",
+      email: user.email || "",
+      phone: data.phoneNumber,
+      photoURL: data.photoURL,
+      studentId: data.studentId,
+      grade: data.grade,
+      employeeId: data.employeeId,
+      department: data.department,
+      wardName: data.wardName,
+      wardStudentId: data.wardStudentId,
+    });
+
+    await auditService.logEvent({
+      action: "PROFILE_UPDATED",
+      userId: user.uid,
+      userEmail: user.email,
+      userRole: userProfile?.role,
+      severity: "info",
+      details: { fieldsUpdated: Object.keys(data) },
+    });
+
     setUserProfile((prev) => (prev ? { ...prev, ...updated } : null));
   };
 
@@ -250,6 +374,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     register,
     logout,
     resetPassword,
+    sendEmailVerificationMail,
+    reauthenticateUser,
     updateProfileData,
     refreshProfile,
   };

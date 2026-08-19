@@ -1,10 +1,11 @@
 "use client";
 
-import React, { useEffect } from "react";
+import React, { useEffect, useRef } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import Link from "next/link";
-import { ShieldAlert, ArrowLeft, Loader2 } from "lucide-react";
+import { ShieldAlert } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
+import { auditService } from "@/services/auditService";
 import type { UserRole } from "@/types/auth";
 
 interface ProtectedRouteProps {
@@ -21,6 +22,7 @@ export default function ProtectedRoute({
   const { user, userProfile, loading } = useAuth();
   const router = useRouter();
   const pathname = usePathname();
+  const loggedAttempt = useRef(false);
 
   useEffect(() => {
     if (!loading && !user) {
@@ -28,6 +30,17 @@ export default function ProtectedRoute({
       router.push(redirectUrl);
     }
   }, [user, loading, router, pathname, redirectTo]);
+
+  useEffect(() => {
+    if (!loading && user && allowedRoles && allowedRoles.length > 0) {
+      const userRole = userProfile?.role || "student";
+      const hasRole = allowedRoles.includes(userRole);
+      if (!hasRole && !loggedAttempt.current) {
+        loggedAttempt.current = true;
+        auditService.logUnauthorizedAccess(pathname, allowedRoles.join(", "), userRole);
+      }
+    }
+  }, [loading, user, allowedRoles, userProfile, pathname]);
 
   // Loading state
   if (loading) {

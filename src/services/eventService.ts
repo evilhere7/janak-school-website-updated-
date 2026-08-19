@@ -1,6 +1,7 @@
 import { supabase } from "@/lib/supabase";
 import type { EventRow } from "@/types/database";
 import { EVENTS } from "@/lib/data/schoolData";
+import { sanitizeHtml, sanitizeText } from "@/lib/security/sanitize";
 
 export interface SchoolEvent {
   id: string;
@@ -66,19 +67,19 @@ export const eventService = {
   },
 
   /**
-   * Add a new event to Supabase
+   * Add a new event to Supabase with input sanitization
    */
   async createEvent(event: Omit<SchoolEvent, "id">): Promise<boolean> {
     try {
       const { error } = await supabase.from("events").insert({
-        title: event.title,
-        description: event.description,
-        category: event.category,
-        event_date: event.date,
-        time: event.time,
-        location: event.venue,
-        image_url: event.image,
-        is_upcoming: event.isUpcoming,
+        title: sanitizeText(event.title),
+        description: sanitizeHtml(event.description),
+        category: sanitizeText(event.category),
+        event_date: sanitizeText(event.date),
+        time: sanitizeText(event.time),
+        location: sanitizeText(event.venue),
+        image_url: event.image ? sanitizeText(event.image) : null,
+        is_upcoming: Boolean(event.isUpcoming),
       });
 
       if (error) {
