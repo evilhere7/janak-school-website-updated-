@@ -1,7 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import Image from "next/image";
+import type { FormEvent } from "react";
+import Link from "next/link";
 import {
   MapPin,
   Phone,
@@ -9,377 +10,328 @@ import {
   Clock,
   Send,
   CheckCircle2,
-  HelpCircle,
-  Sparkles,
+  MessageSquare,
+  ArrowRight,
   Building2,
-  ExternalLink,
 } from "lucide-react";
 import { SCHOOL_INFO } from "@/lib/data/schoolData";
+import { cn } from "@/lib/utils";
 
-const FAQS = [
-  {
-    question: "When does the admission process start for +2 Science and Management?",
-    answer:
-      "Admissions for +2 Science, Management, and Humanities open immediately following the publication of the National Secondary Education Examination (SEE) results, usually around Ashadh / Shrawan.",
-  },
-  {
-    question: "Are government scholarship quotas available at JHSS?",
-    answer:
-      "Yes, JHSS provides reserved government scholarships as per the Ministry of Education guidelines, alongside special institutional fee waivers through the Late Surya Bhakta Adhikari Memorial Trust for deserving students.",
-  },
-  {
-    question: "What are the school office working hours?",
-    answer:
-      "The administrative office is open Sunday through Thursday from 9:30 AM to 4:30 PM, and on Friday from 9:30 AM to 2:00 PM (Closed on Saturdays and public holidays).",
-  },
-  {
-    question: "Is English medium available for all school grades?",
-    answer:
-      "Yes, Shree Janak Secondary School operates both English and Nepali medium streams from Play Group / Nursery all the way through Class 10 (SEE) and Class 12 (+2).",
-  },
-];
+type FormState = {
+  name: string;
+  email: string;
+  phone: string;
+  subject: string;
+  message: string;
+};
+
+type Status = "idle" | "loading" | "success" | "error";
 
 export default function ContactPage() {
-  const [formData, setFormData] = useState({
+  const [form, setForm] = useState<FormState>({
     name: "",
     email: "",
     phone: "",
-    grade: "Class 11 Science (+2)",
+    subject: "",
     message: "",
   });
-  const [isSubmitted, setIsSubmitted] = useState(false);
-  const [activeFaq, setActiveFaq] = useState<number | null>(0);
+  const [status, setStatus] = useState<Status>("idle");
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
+  ) => {
+    setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }));
+  };
+
+  const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
-    setIsSubmitted(true);
+    if (!form.name || !form.email || !form.message) return;
+    setStatus("loading");
+    // Simulate form submission
+    await new Promise((r) => setTimeout(r, 1200));
+    setStatus("success");
   };
 
   return (
-    <div className="min-h-screen bg-off-white">
+    <div className="min-h-screen bg-off-white selection:bg-gold selection:text-white">
       {/* Hero Header */}
-      <section className="relative hero-gradient py-20 lg:py-28 text-white overflow-hidden">
-        <div className="max-w-7xl mx-auto px-6 text-center">
-          <span className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/10 text-gold-lighter text-xs font-semibold uppercase tracking-widest mb-4">
-            <Mail size={14} /> Get in Touch
-          </span>
-          <h1 className="font-display text-4xl sm:text-5xl lg:text-6xl font-bold tracking-tight mb-6">
-            Contact <span className="text-gradient-gold">JHSS Gaindakot</span>
+      <section className="relative hero-gradient text-white py-24 sm:py-32 overflow-hidden">
+        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/10 backdrop-blur-md border border-white/20 text-xs sm:text-sm font-semibold uppercase tracking-wider text-gold-light mb-6">
+            <MessageSquare size={14} /> Office Enquiries
+          </div>
+          <h1 className="font-display font-black text-3xl sm:text-5xl lg:text-6xl tracking-tight text-white mb-6">
+            Contact Janak Higher Secondary School
           </h1>
-          <p className="text-white/80 text-lg max-w-3xl mx-auto leading-relaxed">
-            Have questions about admissions, academic programs, facilities, or campus visits?
-            Our administrative team is here to assist you.
+          <p className="text-white/80 text-base sm:text-xl max-w-3xl mx-auto leading-relaxed">
+            Our administrative office is ready to assist with admissions enquiries, academic support, and general information.
           </p>
         </div>
       </section>
 
-      {/* Main Form & Contact Info */}
-      <section className="section-padding">
-        <div className="max-w-7xl mx-auto px-6">
-          <div className="grid lg:grid-cols-12 gap-12">
-            {/* Left: Contact Details Card (5 cols) */}
-            <div className="lg:col-span-5 space-y-6">
-              <div className="bg-navy rounded-3xl p-8 text-white shadow-xl">
-                <h3 className="font-display text-2xl font-bold mb-6 text-white">
-                  Campus Address & Contacts
-                </h3>
-
-                <div className="space-y-6">
-                  {/* Address */}
-                  <div className="flex items-start gap-4">
-                    <div className="w-10 h-10 rounded-xl bg-gold/20 flex items-center justify-center flex-shrink-0 text-gold-light">
-                      <MapPin size={20} />
-                    </div>
-                    <div>
-                      <div className="font-bold text-sm text-gold-light mb-1">Campus Location</div>
-                      <p className="text-white/80 text-xs sm:text-sm leading-relaxed">
-                        {SCHOOL_INFO.location}
-                      </p>
-                      <span className="text-xs text-white/50 block mt-1">
-                        (Near Congress Chowk, Gaindakot-5)
-                      </span>
-                    </div>
-                  </div>
-
-                  {/* Phone */}
-                  <div className="flex items-start gap-4">
-                    <div className="w-10 h-10 rounded-xl bg-gold/20 flex items-center justify-center flex-shrink-0 text-gold-light">
-                      <Phone size={20} />
-                    </div>
-                    <div>
-                      <div className="font-bold text-sm text-gold-light mb-1">Telephone Numbers</div>
-                      {SCHOOL_INFO.phones.map((phone) => (
-                        <a
-                          key={phone}
-                          href={`tel:${phone}`}
-                          className="block text-white/80 hover:text-gold-light transition-colors text-xs sm:text-sm"
-                        >
-                          {phone}
-                        </a>
-                      ))}
-                    </div>
-                  </div>
-
-                  {/* Email */}
-                  <div className="flex items-start gap-4">
-                    <div className="w-10 h-10 rounded-xl bg-gold/20 flex items-center justify-center flex-shrink-0 text-gold-light">
-                      <Mail size={20} />
-                    </div>
-                    <div>
-                      <div className="font-bold text-sm text-gold-light mb-1">Official Email</div>
-                      {SCHOOL_INFO.emails.map((email) => (
-                        <a
-                          key={email}
-                          href={`mailto:${email}`}
-                          className="block text-white/80 hover:text-gold-light transition-colors text-xs sm:text-sm truncate max-w-[240px]"
-                        >
-                          {email}
-                        </a>
-                      ))}
-                    </div>
-                  </div>
-
-                  {/* Hours */}
-                  <div className="flex items-start gap-4">
-                    <div className="w-10 h-10 rounded-xl bg-gold/20 flex items-center justify-center flex-shrink-0 text-gold-light">
-                      <Clock size={20} />
-                    </div>
-                    <div>
-                      <div className="font-bold text-sm text-gold-light mb-1">Office Hours</div>
-                      <p className="text-white/80 text-xs sm:text-sm">
-                        Sunday – Thursday: 9:30 AM – 4:30 PM
-                      </p>
-                      <p className="text-white/80 text-xs sm:text-sm">
-                        Friday: 9:30 AM – 2:00 PM
-                      </p>
-                      <span className="text-xs text-white/50 block mt-1">
-                        (Closed on Saturdays & National Holidays)
-                      </span>
-                    </div>
-                  </div>
+      {/* Main Content Split */}
+      <section className="py-20 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="grid lg:grid-cols-12 gap-12 items-start">
+          {/* Left: Contact Info */}
+          <div className="lg:col-span-5 space-y-6">
+            {/* School Address Card */}
+            <div className="bg-gradient-to-br from-navy-dark via-navy to-navy-light text-white rounded-3xl p-8 sm:p-10 shadow-xl">
+              <div className="flex items-center gap-3 mb-6">
+                <div className="w-10 h-10 rounded-2xl bg-white/10 flex items-center justify-center flex-shrink-0">
+                  <Building2 size={20} className="text-gold-light" />
+                </div>
+                <div>
+                  <h2 className="font-display font-black text-xl text-white">Shree Janak Secondary School</h2>
+                  <p className="text-white/60 text-xs font-semibold uppercase tracking-wide">Official School Office</p>
                 </div>
               </div>
 
-              {/* Campus Blocks Info */}
-              <div className="bg-white rounded-3xl p-6 border border-gray-100 shadow-sm">
-                <h4 className="font-display font-bold text-navy text-lg mb-3 flex items-center gap-2">
-                  <Building2 size={18} className="text-gold" /> Key Campus Blocks
-                </h4>
-                <div className="space-y-2 text-xs text-gray-600">
-                  <div className="p-2.5 rounded-xl bg-gray-50 font-medium">
-                    <strong>Model School Wing:</strong> Congress Chowk, Administration & Secondary
+              <div className="space-y-5 text-sm text-white/80">
+                <div className="flex items-start gap-3">
+                  <MapPin size={16} className="text-gold-light flex-shrink-0 mt-0.5" />
+                  <div>
+                    <div className="font-semibold text-white text-sm">Physical Address</div>
+                    <div className="text-xs mt-0.5">{SCHOOL_INFO.location}</div>
+                    <div className="text-xs text-white/50 mt-0.5">Near Congress Chowk, Gaindakot</div>
                   </div>
-                  <div className="p-2.5 rounded-xl bg-gray-50 font-medium">
-                    <strong>+2 Aadarsha Wing:</strong> Higher Secondary Science & Management
+                </div>
+
+                <div className="flex items-start gap-3">
+                  <Phone size={16} className="text-gold-light flex-shrink-0 mt-0.5" />
+                  <div>
+                    <div className="font-semibold text-white text-sm">Phone Numbers</div>
+                    {SCHOOL_INFO.phones.map((p) => (
+                      <a
+                        key={p}
+                        href={`tel:${p}`}
+                        className="block text-xs text-gold-light hover:text-white transition-colors mt-0.5 font-mono"
+                      >
+                        {p}
+                      </a>
+                    ))}
                   </div>
-                  <div className="p-2.5 rounded-xl bg-gray-50 font-medium">
-                    <strong>Saraswati Wing:</strong> ICT Labs & Room to Read Library
+                </div>
+
+                <div className="flex items-start gap-3">
+                  <Mail size={16} className="text-gold-light flex-shrink-0 mt-0.5" />
+                  <div>
+                    <div className="font-semibold text-white text-sm">Email Addresses</div>
+                    {SCHOOL_INFO.emails.map((e) => (
+                      <a
+                        key={e}
+                        href={`mailto:${e}`}
+                        className="block text-xs text-gold-light hover:text-white transition-colors mt-0.5 truncate"
+                      >
+                        {e}
+                      </a>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="flex items-start gap-3">
+                  <Clock size={16} className="text-gold-light flex-shrink-0 mt-0.5" />
+                  <div>
+                    <div className="font-semibold text-white text-sm">Office Hours</div>
+                    <div className="text-xs mt-0.5">Sunday – Friday: 10:00 AM – 4:30 PM</div>
+                    <div className="text-xs text-white/50 mt-0.5">Saturday & Public Holidays: Closed</div>
                   </div>
                 </div>
               </div>
             </div>
 
-            {/* Right: Admission & Inquiry Form (7 cols) */}
-            <div className="lg:col-span-7">
-              <div className="bg-white rounded-3xl p-8 sm:p-12 border border-gray-100 shadow-xl">
-                <span className="inline-block px-3.5 py-1 rounded-full bg-gold/10 text-gold text-xs font-bold uppercase tracking-wider mb-2">
-                  Online Inquiry
-                </span>
-                <h2 className="font-display text-2xl sm:text-3xl font-bold text-navy mb-3">
-                  Send Us an <span className="text-gradient-gold">Admission Enquiry</span>
-                </h2>
-                <p className="text-gray-600 text-sm mb-8">
-                  Fill in the form below and our counseling department will contact you within 24 business hours.
-                </p>
+            {/* Quick Links */}
+            <div className="bg-white rounded-3xl p-8 border border-gray-100 shadow-sm space-y-3">
+              <h3 className="font-display font-bold text-navy text-base mb-4">Quick Links</h3>
+              {[
+                { label: "Admission Process", href: "/admissions/process" },
+                { label: "Eligibility & Requirements", href: "/admissions/requirements" },
+                { label: "Frequently Asked Questions", href: "/admissions/faq" },
+                { label: "Student Result Portal", href: "/portal/student" },
+                { label: "Academic Programs", href: "/academics/programs" },
+              ].map((link) => (
+                <Link
+                  key={link.href}
+                  href={link.href}
+                  className="flex items-center justify-between py-2.5 border-b border-gray-50 text-xs font-semibold text-gray-700 hover:text-navy group"
+                >
+                  <span>{link.label}</span>
+                  <ArrowRight size={13} className="text-gray-300 group-hover:text-gold transition-colors" />
+                </Link>
+              ))}
+            </div>
+          </div>
 
-                {isSubmitted ? (
-                  <div className="p-8 rounded-2xl bg-green-50 border border-green-200 text-center animate-fade-in">
-                    <CheckCircle2 className="w-14 h-14 text-green-600 mx-auto mb-4" />
-                    <h3 className="font-display text-2xl font-bold text-green-900 mb-2">
-                      Inquiry Received Successfully!
-                    </h3>
-                    <p className="text-green-800 text-sm max-w-md mx-auto mb-6">
-                      Thank you for reaching out to Shree Janak Secondary School. Our admissions coordinator
-                      will review your request and get back to you shortly.
-                    </p>
-                    <button
-                      onClick={() => {
-                        setIsSubmitted(false);
-                        setFormData({
-                          name: "",
-                          email: "",
-                          phone: "",
-                          grade: "Class 11 Science (+2)",
-                          message: "",
-                        });
-                      }}
-                      className="text-xs font-bold text-navy hover:text-gold underline cursor-pointer"
-                    >
-                      Submit another inquiry
-                    </button>
+          {/* Right: Contact Form */}
+          <div className="lg:col-span-7">
+            <div className="bg-white rounded-3xl border border-gray-100 shadow-xl p-8 sm:p-12">
+              {status === "success" ? (
+                <div className="text-center py-12 space-y-4">
+                  <div className="w-20 h-20 rounded-full bg-green-50 flex items-center justify-center mx-auto">
+                    <CheckCircle2 size={40} className="text-green-500" />
                   </div>
-                ) : (
-                  <form onSubmit={handleSubmit} className="space-y-5">
+                  <h3 className="font-display font-black text-2xl text-navy">
+                    Message Received!
+                  </h3>
+                  <p className="text-gray-600 text-sm max-w-sm mx-auto">
+                    Thank you for reaching out. Our office team will respond to your enquiry within 1–2 business days (Sunday–Friday).
+                  </p>
+                  <button
+                    onClick={() => {
+                      setStatus("idle");
+                      setForm({ name: "", email: "", phone: "", subject: "", message: "" });
+                    }}
+                    className="mt-4 px-6 py-3 rounded-full bg-navy text-white font-bold text-xs hover:bg-gold hover:text-navy transition-all shadow-md"
+                  >
+                    Send Another Message
+                  </button>
+                </div>
+              ) : (
+                <>
+                  <div className="mb-8">
+                    <h2 className="font-display font-black text-2xl sm:text-3xl text-navy">
+                      Send Us a Message
+                    </h2>
+                    <p className="text-gray-500 text-xs sm:text-sm mt-2">
+                      Fill out the form below and our team will get back to you promptly.
+                    </p>
+                  </div>
+
+                  <form onSubmit={handleSubmit} className="space-y-5" noValidate>
                     <div className="grid sm:grid-cols-2 gap-5">
-                      <div>
-                        <label className="block text-xs font-bold text-navy uppercase tracking-wider mb-2">
-                          Full Name *
+                      <div className="space-y-1.5">
+                        <label htmlFor="name" className="block text-xs font-bold text-navy uppercase tracking-wider">
+                          Full Name <span className="text-crimson">*</span>
                         </label>
                         <input
+                          id="name"
+                          name="name"
                           type="text"
                           required
-                          placeholder="e.g. Ramesh Poudel"
-                          value={formData.name}
-                          onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                          className="w-full px-4 py-3 rounded-xl bg-gray-50 border border-gray-200 text-sm focus:bg-white focus:border-gold outline-none transition-all text-gray-800"
+                          value={form.name}
+                          onChange={handleChange}
+                          placeholder="Your full name"
+                          className="w-full px-4 py-3 rounded-xl bg-gray-50 border border-gray-200 text-sm focus:bg-white focus:border-gold outline-none transition-all placeholder:text-gray-400"
                         />
                       </div>
-
-                      <div>
-                        <label className="block text-xs font-bold text-navy uppercase tracking-wider mb-2">
-                          Phone Number *
+                      <div className="space-y-1.5">
+                        <label htmlFor="email" className="block text-xs font-bold text-navy uppercase tracking-wider">
+                          Email Address <span className="text-crimson">*</span>
                         </label>
                         <input
-                          type="tel"
+                          id="email"
+                          name="email"
+                          type="email"
                           required
-                          placeholder="e.g. 98XXXXXXXX"
-                          value={formData.phone}
-                          onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                          className="w-full px-4 py-3 rounded-xl bg-gray-50 border border-gray-200 text-sm focus:bg-white focus:border-gold outline-none transition-all text-gray-800"
+                          value={form.email}
+                          onChange={handleChange}
+                          placeholder="your@email.com"
+                          className="w-full px-4 py-3 rounded-xl bg-gray-50 border border-gray-200 text-sm focus:bg-white focus:border-gold outline-none transition-all placeholder:text-gray-400"
                         />
                       </div>
                     </div>
 
                     <div className="grid sm:grid-cols-2 gap-5">
-                      <div>
-                        <label className="block text-xs font-bold text-navy uppercase tracking-wider mb-2">
-                          Email Address
+                      <div className="space-y-1.5">
+                        <label htmlFor="phone" className="block text-xs font-bold text-navy uppercase tracking-wider">
+                          Phone Number
                         </label>
                         <input
-                          type="email"
-                          placeholder="e.g. name@example.com"
-                          value={formData.email}
-                          onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                          className="w-full px-4 py-3 rounded-xl bg-gray-50 border border-gray-200 text-sm focus:bg-white focus:border-gold outline-none transition-all text-gray-800"
+                          id="phone"
+                          name="phone"
+                          type="tel"
+                          value={form.phone}
+                          onChange={handleChange}
+                          placeholder="+977-XXXXXXXXX"
+                          className="w-full px-4 py-3 rounded-xl bg-gray-50 border border-gray-200 text-sm focus:bg-white focus:border-gold outline-none transition-all placeholder:text-gray-400"
                         />
                       </div>
-
-                      <div>
-                        <label className="block text-xs font-bold text-navy uppercase tracking-wider mb-2">
-                          Interested Level / Stream *
+                      <div className="space-y-1.5">
+                        <label htmlFor="subject" className="block text-xs font-bold text-navy uppercase tracking-wider">
+                          Enquiry Subject
                         </label>
                         <select
-                          value={formData.grade}
-                          onChange={(e) => setFormData({ ...formData, grade: e.target.value })}
-                          className="w-full px-4 py-3 rounded-xl bg-gray-50 border border-gray-200 text-sm focus:bg-white focus:border-gold outline-none transition-all text-navy font-medium cursor-pointer"
+                          id="subject"
+                          name="subject"
+                          value={form.subject}
+                          onChange={handleChange}
+                          className="w-full px-4 py-3 rounded-xl bg-gray-50 border border-gray-200 text-sm focus:bg-white focus:border-gold outline-none transition-all text-gray-700"
                         >
-                          <option value="Play Group / Nursery">Play Group / Nursery / KG</option>
-                          <option value="Primary (Class 1-5)">Primary (Class 1 - 5)</option>
-                          <option value="Lower Secondary (Class 6-8)">Lower Secondary (Class 6 - 8)</option>
-                          <option value="Secondary (Class 9-10 SEE)">Secondary (Class 9 - 10 SEE)</option>
-                          <option value="Class 11 Science (+2)">+2 Science Stream</option>
-                          <option value="Class 11 Management (+2)">+2 Management Stream</option>
-                          <option value="Class 11 Humanities (+2)">+2 Humanities Stream</option>
-                          <option value="Other Inquiries">General / Other Inquiries</option>
+                          <option value="">Select a topic…</option>
+                          <option value="Admissions Enquiry">Admissions Enquiry</option>
+                          <option value="Academic Programs">Academic Programs</option>
+                          <option value="Facilities & Campus">Facilities & Campus</option>
+                          <option value="Student Records">Student Records</option>
+                          <option value="Fee & Scholarship">Fee & Scholarship</option>
+                          <option value="Other">Other</option>
                         </select>
                       </div>
                     </div>
 
-                    <div>
-                      <label className="block text-xs font-bold text-navy uppercase tracking-wider mb-2">
-                        Your Message / Questions
+                    <div className="space-y-1.5">
+                      <label htmlFor="message" className="block text-xs font-bold text-navy uppercase tracking-wider">
+                        Your Message <span className="text-crimson">*</span>
                       </label>
                       <textarea
-                        rows={4}
-                        placeholder="Write any questions regarding fee structure, scholarship, transport or curriculum..."
-                        value={formData.message}
-                        onChange={(e) => setFormData({ ...formData, message: e.target.value })}
-                        className="w-full px-4 py-3 rounded-xl bg-gray-50 border border-gray-200 text-sm focus:bg-white focus:border-gold outline-none transition-all text-gray-800 resize-none"
+                        id="message"
+                        name="message"
+                        required
+                        rows={5}
+                        value={form.message}
+                        onChange={handleChange}
+                        placeholder="Please describe your enquiry in detail..."
+                        className="w-full px-4 py-3 rounded-xl bg-gray-50 border border-gray-200 text-sm focus:bg-white focus:border-gold outline-none transition-all resize-none placeholder:text-gray-400"
                       />
                     </div>
 
                     <button
                       type="submit"
-                      className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-8 py-3.5 rounded-full bg-navy hover:bg-gold text-white text-sm font-bold shadow-navy transition-all duration-300 cursor-pointer"
+                      disabled={status === "loading" || !form.name || !form.email || !form.message}
+                      className={cn(
+                        "w-full flex items-center justify-center gap-2 py-4 rounded-full font-bold text-sm transition-all shadow-md",
+                        status === "loading"
+                          ? "bg-gray-300 text-gray-500 cursor-not-allowed"
+                          : "bg-navy text-white hover:bg-gold hover:text-navy cursor-pointer"
+                      )}
                     >
-                      <Send size={16} /> Submit Admission Inquiry
+                      {status === "loading" ? (
+                        <>
+                          <span className="w-4 h-4 border-2 border-gray-400 border-t-transparent rounded-full animate-spin" />
+                          Sending Message...
+                        </>
+                      ) : (
+                        <>
+                          <Send size={16} /> Send Enquiry to JHSS
+                        </>
+                      )}
                     </button>
                   </form>
-                )}
+                </>
+              )}
+            </div>
+
+            {/* Embedded Google Map Placeholder */}
+            <div className="mt-6 rounded-3xl overflow-hidden border border-gray-100 shadow-sm bg-gray-100 relative h-56 sm:h-72">
+              <iframe
+                src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3538.0!2d83.97!3d27.53!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x0%3A0x0!2sGaindakot-5%2C+Nawalparasi%2C+Nepal!5e0!3m2!1sen!2snp!4v1234567890"
+                width="100%"
+                height="100%"
+                style={{ border: 0 }}
+                allowFullScreen
+                loading="lazy"
+                referrerPolicy="no-referrer-when-downgrade"
+                title="JHSS Location Map — Gaindakot-5, Nawalparasi"
+              />
+              <div className="absolute bottom-4 right-4">
+                <a
+                  href="https://maps.google.com/?q=Gaindakot-5,Nawalparasi,Nepal"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="px-4 py-2 rounded-full bg-navy text-white text-xs font-bold shadow-md hover:bg-gold hover:text-navy transition-all"
+                >
+                  Open in Maps
+                </a>
               </div>
             </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Map & Location Section */}
-      <section className="section-padding bg-white border-t border-gray-100">
-        <div className="max-w-7xl mx-auto px-6">
-          <div className="text-center max-w-2xl mx-auto mb-12">
-            <span className="inline-block px-4 py-1.5 rounded-full bg-navy/8 text-navy text-xs font-semibold uppercase tracking-widest mb-4">
-              Find Us on Map
-            </span>
-            <h2 className="font-display text-3xl sm:text-4xl font-bold text-navy">
-              Gaindakot <span className="text-gradient-gold">Campus Location</span>
-            </h2>
-            <p className="text-gray-600 mt-2 text-sm">
-              Easily accessible from Mahendra Highway and Narayangarh city center across the Narayani River bridge.
-            </p>
-          </div>
-
-          <div className="rounded-3xl overflow-hidden shadow-xl border border-gray-200 h-[400px] relative bg-gray-100">
-            <iframe
-              src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d14131.066442654862!2d84.40264024823292!3d27.70903823432924!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3994fb3c5bdf1bb3%3A0x8670a48b30147987!2sShree%20Janak%20Secondary%20School!5e0!3m2!1sen!2snp!4v1700000000000!5m2!1sen!2snp"
-              width="100%"
-              height="100%"
-              style={{ border: 0 }}
-              allowFullScreen={false}
-              loading="lazy"
-              referrerPolicy="no-referrer-when-downgrade"
-              title="Shree Janak Secondary School Map Location"
-            />
-          </div>
-        </div>
-      </section>
-
-      {/* FAQ Accordion Section */}
-      <section className="section-padding bg-gray-50">
-        <div className="max-w-4xl mx-auto px-6">
-          <div className="text-center mb-14">
-            <span className="inline-block px-4 py-1.5 rounded-full bg-navy/8 text-navy text-xs font-semibold uppercase tracking-widest mb-4">
-              Frequently Asked Questions
-            </span>
-            <h2 className="font-display text-3xl sm:text-4xl font-bold text-navy">
-              Common Questions & <span className="text-gradient-gold">Answers</span>
-            </h2>
-          </div>
-
-          <div className="space-y-4">
-            {FAQS.map((faq, idx) => (
-              <div
-                key={idx}
-                className="bg-white rounded-2xl border border-gray-200 overflow-hidden shadow-sm transition-all"
-              >
-                <button
-                  onClick={() => setActiveFaq(activeFaq === idx ? null : idx)}
-                  className="w-full px-6 py-5 text-left flex items-center justify-between gap-4 font-display font-bold text-navy text-base sm:text-lg hover:text-gold transition-colors cursor-pointer"
-                >
-                  <span className="flex items-center gap-3">
-                    <HelpCircle size={18} className="text-gold flex-shrink-0" />
-                    {faq.question}
-                  </span>
-                  <span className="text-xs font-bold text-gold flex-shrink-0">
-                    {activeFaq === idx ? "−" : "+"}
-                  </span>
-                </button>
-
-                {activeFaq === idx && (
-                  <div className="px-6 pb-6 pt-1 text-gray-600 text-sm leading-relaxed border-t border-gray-100">
-                    {faq.answer}
-                  </div>
-                )}
-              </div>
-            ))}
           </div>
         </div>
       </section>

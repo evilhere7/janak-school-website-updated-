@@ -1,179 +1,179 @@
 import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
-import { ExternalLink, BookOpen, FlaskConical, Monitor, GraduationCap } from "lucide-react";
-import { CURRICULUM } from "@/lib/data/schoolData";
+import {
+  GraduationCap,
+  BookOpen,
+  FlaskConical,
+  Briefcase,
+  Layers,
+  Sparkles,
+  ArrowRight,
+  CheckCircle2,
+  Users,
+  Award,
+} from "lucide-react";
+import { DETAILED_PROGRAMS, SCHOOL_INFO } from "@/lib/data/schoolData";
 
 export const metadata: Metadata = {
-  title: "Academics",
-  description: "Explore JHSS's academic programs from Class 1 to +2 Science, Management, and Humanities. View curriculum and teacher guides.",
-};
-
-const STREAM_ICONS: Record<string, React.ReactNode> = {
-  Science: <FlaskConical size={20} />,
-  Management: <Monitor size={20} />,
-  Humanities: <GraduationCap size={20} />,
+  title: "Academics | Shree Janak Secondary School",
+  description:
+    "Explore academic streams at Shree Janak Secondary School: Play Group to Class 10 dual-medium, +2 Science, +2 Management, and +2 Humanities.",
 };
 
 export default function AcademicsPage() {
   return (
-    <div>
-      {/* Header */}
-      <div className="hero-gradient py-20 text-center text-white">
-        <div className="max-w-3xl mx-auto px-6">
-          <span className="inline-block px-4 py-1.5 rounded-full bg-white/10 text-white/70 text-xs font-semibold uppercase tracking-widest mb-4">
-            Academic Programs
-          </span>
-          <h1 className="font-display text-5xl font-bold mb-4">Academics at JHSS</h1>
-          <p className="text-white/70 text-lg">
-            A comprehensive, NEB-aligned curriculum for every stage of learning — from primary foundations to higher secondary specializations.
+    <div className="min-h-screen bg-off-white selection:bg-gold selection:text-white">
+      {/* Hero Header */}
+      <section className="relative hero-gradient text-white py-24 sm:py-32 overflow-hidden">
+        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/10 backdrop-blur-md border border-white/20 text-xs sm:text-sm font-semibold uppercase tracking-wider text-gold-light mb-6">
+            <GraduationCap size={14} /> Dual Medium Excellence
+          </div>
+          <h1 className="font-display font-black text-3xl sm:text-5xl lg:text-6xl tracking-tight text-white mb-6">
+            Academic Programs & Pedagogy
+          </h1>
+          <p className="text-white/80 text-base sm:text-xl max-w-3xl mx-auto leading-relaxed">
+            Delivering rigorous national curriculum standards from Early Childhood to Class 12 with parallel English and Nepali medium streams.
           </p>
         </div>
-      </div>
+      </section>
 
-      {/* Overview Cards */}
-      <section className="section-padding bg-white" id="school">
-        <div className="max-w-7xl mx-auto px-6">
-          <div className="text-center mb-12">
-            <span className="inline-block px-4 py-1.5 rounded-full bg-navy/8 text-navy text-xs font-semibold uppercase tracking-widest mb-4">
-              Levels Offered
-            </span>
-            <h2 className="font-display text-4xl font-bold text-navy">
-              Education for Every <span className="text-gradient-gold">Stage</span>
-            </h2>
-          </div>
-
-          <div className="space-y-8">
-            {CURRICULUM.map((level, i) => (
-              <div
-                key={level.level}
-                className="bg-gray-50 rounded-2xl border border-gray-100 overflow-hidden shadow-sm"
-                id={
-                  level.level.toLowerCase().includes("higher")
-                    ? "higher-secondary"
-                    : level.level.toLowerCase().includes("primary")
-                    ? "primary"
-                    : level.level.toLowerCase().includes("lower")
-                    ? "secondary"
-                    : "early"
-                }
-              >
-                <div className="flex items-start gap-6 p-6 lg:p-8">
-                  <div className="w-12 h-12 rounded-xl bg-navy flex items-center justify-center text-gold-light font-bold text-xl flex-shrink-0">
-                    {i + 1}
-                  </div>
-                  <div className="flex-1">
-                    <div className="flex items-start justify-between gap-4 flex-wrap mb-4">
-                      <div>
-                        <h3 className="font-bold text-navy text-xl">{level.level}</h3>
-                        <p className="text-gold text-sm font-semibold">{level.grades}</p>
-                      </div>
-                    </div>
-
-                    {/* Regular subjects */}
-                    {level.subjects.length > 0 && (
-                      <div className="flex flex-wrap gap-2 mb-4">
-                        {level.subjects.map((sub) => (
-                          <span
-                            key={sub}
-                            className="bg-white border border-gray-200 text-navy text-xs font-medium px-3 py-1.5 rounded-full"
-                          >
-                            {sub}
-                          </span>
-                        ))}
-                      </div>
-                    )}
-
-                    {/* Teacher guides */}
-                    {level.guideLinks && level.guideLinks.length > 0 && (
-                      <div className="mt-4">
-                        <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">
-                          Teacher Guides (CEHRD/MOECD)
-                        </p>
-                        <div className="grid sm:grid-cols-2 gap-2">
-                          {level.guideLinks.map((g) => (
-                            <a
-                              key={g.label}
-                              href={g.url}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="flex items-center gap-2 text-sm text-navy hover:text-gold transition-colors bg-white border border-gray-100 rounded-xl px-4 py-2"
-                            >
-                              <ExternalLink size={14} className="text-gold flex-shrink-0" />
-                              <span className="truncate">{g.label}</span>
-                            </a>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-
-                    {/* Streams */}
-                    {level.streams && (
-                      <div className="grid sm:grid-cols-3 gap-4 mt-4">
-                        {level.streams.map((stream) => (
-                          <div
-                            key={stream.name}
-                            className="bg-white border border-gray-100 rounded-2xl p-5"
-                            id={stream.name.toLowerCase()}
-                          >
-                            <div className="flex items-center gap-2 mb-3">
-                              <div className="text-navy">{STREAM_ICONS[stream.name]}</div>
-                              <h4 className="font-bold text-navy">{stream.name}</h4>
-                            </div>
-                            <ul className="space-y-1.5">
-                              {stream.subjects.map((s) => (
-                                <li key={s} className="flex items-center gap-2 text-sm text-gray-600">
-                                  <div className="w-1.5 h-1.5 rounded-full bg-gold flex-shrink-0" />
-                                  {s}
-                                </li>
-                              ))}
-                            </ul>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </div>
-            ))}
+      {/* Academic Highlights Banner */}
+      <section className="py-12 bg-white border-b border-gray-100">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-6">
+            <div className="p-6 rounded-2xl bg-gray-50 border border-gray-100 text-center">
+              <div className="text-3xl font-black text-gold">100%</div>
+              <div className="text-xs text-gray-500 font-semibold mt-1">SEE English Medium Pass Rate</div>
+            </div>
+            <div className="p-6 rounded-2xl bg-gray-50 border border-gray-100 text-center">
+              <div className="text-3xl font-black text-navy">Dual</div>
+              <div className="text-xs text-gray-500 font-semibold mt-1">English & Nepali Mediums</div>
+            </div>
+            <div className="p-6 rounded-2xl bg-gray-50 border border-gray-100 text-center">
+              <div className="text-3xl font-black text-gold">3 Streams</div>
+              <div className="text-xs text-gray-500 font-semibold mt-1">+2 Science, Mgmt & Humanities</div>
+            </div>
+            <div className="p-6 rounded-2xl bg-gray-50 border border-gray-100 text-center">
+              <div className="text-3xl font-black text-navy">60+</div>
+              <div className="text-xs text-gray-500 font-semibold mt-1">Certified Faculty Members</div>
+            </div>
           </div>
         </div>
       </section>
 
-      {/* Curriculum Resources */}
-      <section className="section-padding hero-gradient" id="curriculum">
-        <div className="max-w-4xl mx-auto px-6 text-center">
-          <span className="inline-block px-4 py-1.5 rounded-full bg-white/10 text-white/70 text-xs font-semibold uppercase tracking-widest mb-4">
-            Digital Resources
+      {/* Programs Overview Grid */}
+      <section className="py-20 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="text-center max-w-2xl mx-auto mb-16">
+          <span className="text-gold font-bold text-xs uppercase tracking-widest block mb-2">
+            Educational Levels
           </span>
-          <h2 className="font-display text-4xl font-bold text-white mb-4">
-            Online Learning <span className="text-gradient-gold">Materials</span>
+          <h2 className="font-display font-black text-3xl sm:text-4xl text-navy">
+            Structured Learning for Every Stage
           </h2>
-          <p className="text-white/70 text-base mb-10">
-            Access official CEHRD/MOECD teacher guides, textbook policies, and the national e-learning platform.
+          <p className="text-gray-600 text-sm mt-3">
+            Click on any program to view full curriculum guidelines, subject combinations, and admission eligibility.
           </p>
-          <div className="grid sm:grid-cols-3 gap-4">
-            {[
-              { label: "CEHRD E-Library", url: "http://202.45.146.138/elibrary/", desc: "Teacher guides & curriculum materials" },
-              { label: "Sikai Chautari", url: "http://learning.cehrd.gov.np/", desc: "Government e-learning platform" },
-              { label: "MOECD Resources", url: "https://moecdc.gov.np/", desc: "Official curriculum & textbooks" },
-            ].map((r) => (
-              <a
-                key={r.label}
-                href={r.url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="bg-white/5 border border-white/10 rounded-2xl p-6 hover:bg-white/10 transition-all group text-left"
-              >
-                <BookOpen size={24} className="text-gold-light mb-3" />
-                <div className="font-bold text-white mb-1">{r.label}</div>
-                <div className="text-white/50 text-sm">{r.desc}</div>
-                <div className="mt-3 flex items-center gap-1 text-gold-light text-xs font-semibold group-hover:gap-2 transition-all">
-                  Visit Resource <ExternalLink size={12} />
+        </div>
+
+        <div className="grid md:grid-cols-2 gap-8">
+          {DETAILED_PROGRAMS.map((prog) => (
+            <div
+              key={prog.id}
+              className="bg-white rounded-3xl overflow-hidden border border-gray-100 shadow-sm hover:shadow-xl transition-all duration-300 flex flex-col justify-between"
+            >
+              <div>
+                <div className="relative h-56 w-full">
+                  <Image
+                    src={prog.image}
+                    alt={prog.name}
+                    fill
+                    className="object-cover"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-navy-dark/80 via-transparent to-transparent" />
+                  <div className="absolute top-4 left-4">
+                    <span className="px-3 py-1 rounded-full bg-gold text-navy-dark text-xs font-black uppercase tracking-wider shadow-md">
+                      {prog.medium}
+                    </span>
+                  </div>
+                  <div className="absolute bottom-4 left-4 right-4 text-white">
+                    <span className="text-gold-light text-xs font-semibold block">{prog.level}</span>
+                    <h3 className="font-display font-bold text-xl sm:text-2xl">{prog.name}</h3>
+                  </div>
                 </div>
-              </a>
-            ))}
-          </div>
+
+                <div className="p-8 space-y-4">
+                  <p className="text-gray-600 text-xs sm:text-sm leading-relaxed">
+                    {prog.description}
+                  </p>
+
+                  <div className="space-y-2 pt-2">
+                    <span className="text-xs font-bold text-navy uppercase tracking-wider block">
+                      Key Highlights:
+                    </span>
+                    {prog.highlights.slice(0, 3).map((h, i) => (
+                      <div key={i} className="flex items-start gap-2 text-xs text-gray-700">
+                        <CheckCircle2 size={14} className="text-gold flex-shrink-0 mt-0.5" />
+                        <span>{h}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              <div className="p-8 pt-0 border-t border-gray-100 mt-4 flex items-center justify-between">
+                <Link
+                  href={`/academics/programs#${prog.slug}`}
+                  className="text-xs font-bold text-navy hover:text-gold transition-colors inline-flex items-center gap-1.5"
+                >
+                  Explore Full Curriculum <ArrowRight size={14} />
+                </Link>
+                <Link
+                  href="/admissions"
+                  className="px-4 py-2 rounded-full bg-navy/5 text-navy text-xs font-bold hover:bg-gold hover:text-navy transition-all"
+                >
+                  Apply Now
+                </Link>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* Quick Navigation Cards */}
+        <div className="grid sm:grid-cols-3 gap-6 pt-16">
+          <Link
+            href="/academics/classes"
+            className="p-6 rounded-3xl bg-white border border-gray-100 shadow-sm hover:shadow-md transition-all text-center group"
+          >
+            <div className="w-12 h-12 rounded-2xl bg-navy/5 text-navy group-hover:bg-gold group-hover:text-navy mx-auto mb-4 flex items-center justify-center transition-colors">
+              <Layers size={22} />
+            </div>
+            <h4 className="font-display font-bold text-navy text-base mb-1">Classes & Syllabus</h4>
+            <p className="text-gray-500 text-xs">Curriculum breakdown & teacher guide references</p>
+          </Link>
+
+          <Link
+            href="/faculty"
+            className="p-6 rounded-3xl bg-white border border-gray-100 shadow-sm hover:shadow-md transition-all text-center group"
+          >
+            <div className="w-12 h-12 rounded-2xl bg-navy/5 text-navy group-hover:bg-gold group-hover:text-navy mx-auto mb-4 flex items-center justify-center transition-colors">
+              <Users size={22} />
+            </div>
+            <h4 className="font-display font-bold text-navy text-base mb-1">Faculty Directory</h4>
+            <p className="text-gray-500 text-xs">Meet our department heads and subject teachers</p>
+          </Link>
+
+          <Link
+            href="/academics/facilities"
+            className="p-6 rounded-3xl bg-white border border-gray-100 shadow-sm hover:shadow-md transition-all text-center group"
+          >
+            <div className="w-12 h-12 rounded-2xl bg-navy/5 text-navy group-hover:bg-gold group-hover:text-navy mx-auto mb-4 flex items-center justify-center transition-colors">
+              <FlaskConical size={22} />
+            </div>
+            <h4 className="font-display font-bold text-navy text-base mb-1">Academic Labs</h4>
+            <p className="text-gray-500 text-xs">Science laboratories, library & ICT smart rooms</p>
+          </Link>
         </div>
       </section>
     </div>

@@ -131,9 +131,11 @@ export default function EventsPage() {
                       </span>
                     </div>
 
-                    <h3 className="font-display font-bold text-navy text-2xl sm:text-3xl leading-snug mb-4">
-                      {event.title}
-                    </h3>
+                    <Link href={`/events/${event.slug || event.id}`}>
+                      <h3 className="font-display font-bold text-navy text-2xl sm:text-3xl leading-snug mb-4 hover:text-gold transition-colors">
+                        {event.title}
+                      </h3>
+                    </Link>
 
                     <p className="text-gray-600 text-sm leading-relaxed mb-6">
                       {event.description}
@@ -155,10 +157,10 @@ export default function EventsPage() {
                   {/* Footer actions */}
                   <div className="pt-4 border-t border-gray-100 flex flex-wrap items-center justify-between gap-4">
                     <Link
-                      href="/contact"
+                      href={`/events/${event.slug || event.id}`}
                       className="text-xs font-bold text-navy hover:text-gold flex items-center gap-1.5 transition-colors"
                     >
-                      Inquire with Organizer <ChevronRight size={14} />
+                      View Event Details <ChevronRight size={14} />
                     </Link>
 
                     {event.isUpcoming && (

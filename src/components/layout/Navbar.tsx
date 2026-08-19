@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import Image from "next/image";
+import { usePathname } from "next/navigation";
 import {
   Menu,
   X,
@@ -19,49 +20,88 @@ import { cn } from "@/lib/utils";
 import { SCHOOL_INFO } from "@/lib/data/schoolData";
 import { useAuth } from "@/contexts/AuthContext";
 
-const NAV_LINKS = [
+interface NavItem {
+  label: string;
+  href: string;
+  children?: { label: string; href: string; desc?: string }[];
+}
+
+const NAV_LINKS: NavItem[] = [
   { label: "Home", href: "/" },
   {
     label: "About",
     href: "/about",
     children: [
-      { label: "Our History", href: "/about#history" },
-      { label: "Vision & Mission", href: "/about#vision" },
-      { label: "Principal's Message", href: "/about#principal" },
-      { label: "Campus Blocks", href: "/about#campus" },
+      { label: "Overview", href: "/about", desc: "Our 68+ year institutional legacy" },
+      { label: "Our History", href: "/about/history", desc: "Milestones from 2015 B.S. to present" },
+      { label: "Mission", href: "/about/mission", desc: "Our commitment to quality education" },
+      { label: "Vision", href: "/about/vision", desc: "Inspiring future-ready learners" },
+      { label: "Core Values", href: "/about/values", desc: "Integrity, curiosity, excellence" },
+      { label: "Principal's Message", href: "/about/principal", desc: "Message from Mr. Buddhi Prasad Kandel" },
     ],
   },
   {
     label: "Academics",
     href: "/academics",
     children: [
-      { label: "School Level (1–10)", href: "/academics#school" },
-      { label: "+2 Science", href: "/academics#science" },
-      { label: "+2 Management", href: "/academics#management" },
-      { label: "+2 Humanities", href: "/academics#humanities" },
-      { label: "Curriculum & Guides", href: "/academics#curriculum" },
+      { label: "Academic Overview", href: "/academics", desc: "Dual medium English & Nepali streams" },
+      { label: "Programs (PG – 12)", href: "/academics/programs", desc: "School level, +2 Science, Mgmt, Humanities" },
+      { label: "Classes & Curriculum", href: "/academics/classes", desc: "Curriculum guides & syllabus" },
+      { label: "Faculty Directory", href: "/faculty", desc: "Meet our experienced educators" },
+      { label: "Academic Facilities", href: "/academics/facilities", desc: "Labs, library & ICT smart classrooms" },
     ],
   },
-  { label: "Facilities", href: "/facilities" },
-  { label: "Faculty", href: "/faculty" },
   {
-    label: "News & Notices",
+    label: "Admissions",
+    href: "/admissions",
+    children: [
+      { label: "Admissions 2083", href: "/admissions", desc: "Enrollment details & key dates" },
+      { label: "Admission Process", href: "/admissions/process", desc: "Visual 5-step application roadmap" },
+      { label: "Requirements", href: "/admissions/requirements", desc: "Document checklist & eligibility" },
+      { label: "Admissions FAQ", href: "/admissions/faq", desc: "Common questions & fee guidance" },
+    ],
+  },
+  {
+    label: "Campus",
+    href: "/campus",
+    children: [
+      { label: "Campus Showcase", href: "/campus", desc: "Real photos of our Gaindakot grounds" },
+      { label: "Facilities Directory", href: "/campus/facilities", desc: "Library, science labs & sports arena" },
+      { label: "Infrastructure & Blocks", href: "/campus/infrastructure", desc: "Academic wings & architectural highlights" },
+    ],
+  },
+  {
+    label: "News & Events",
     href: "/news",
     children: [
-      { label: "News & Events", href: "/news" },
-      { label: "Notice Board", href: "/notices" },
-      { label: "Events Calendar", href: "/events" },
+      { label: "News & Updates", href: "/news", desc: "Campus announcements & articles" },
+      { label: "Events Calendar", href: "/events", desc: "Upcoming programs & meets" },
+      { label: "Achievements", href: "/achievements", desc: "SEE toppers & sports awards" },
+      { label: "Notice Board", href: "/notices", desc: "Official examination & tender notices" },
     ],
   },
-  { label: "Gallery", href: "/gallery" },
+  {
+    label: "Gallery",
+    href: "/gallery",
+    children: [
+      { label: "All Photographs", href: "/gallery", desc: "Complete visual archive" },
+      { label: "Campus Grounds", href: "/gallery/campus", desc: "Exterior, gardens & buildings" },
+      { label: "School Events", href: "/gallery/events", desc: "Golden Jubilee & VVIP visits" },
+      { label: "Activities", href: "/gallery/activities", desc: "Red Cross & student clubs" },
+      { label: "Sports & Athletics", href: "/gallery/sports", desc: "Inter-house championships" },
+      { label: "Cultural Programs", href: "/gallery/cultural", desc: "Parents Day dances & drama" },
+    ],
+  },
   { label: "Contact", href: "/contact" },
 ];
 
 export default function Navbar() {
+  const pathname = usePathname();
   const { user, userProfile, logout } = useAuth();
   const [isScrolled, setIsScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [openDropdown, setOpenDropdown] = useState<string | null>(null);
+  const [mobileExpandedDropdown, setMobileExpandedDropdown] = useState<string | null>(null);
   const [userDropdownOpen, setUserDropdownOpen] = useState(false);
 
   const handleScroll = useCallback(() => {
@@ -72,6 +112,13 @@ export default function Navbar() {
     window.addEventListener("scroll", handleScroll, { passive: true });
     return () => window.removeEventListener("scroll", handleScroll);
   }, [handleScroll]);
+
+  // Close mobile menu on route change
+  useEffect(() => {
+    setMobileOpen(false);
+    setOpenDropdown(null);
+    setUserDropdownOpen(false);
+  }, [pathname]);
 
   useEffect(() => {
     if (mobileOpen) {
@@ -90,35 +137,43 @@ export default function Navbar() {
     await logout();
   };
 
+  const isLinkActive = (item: NavItem) => {
+    if (item.href === "/" && pathname === "/") return true;
+    if (item.href !== "/" && pathname.startsWith(item.href)) return true;
+    return false;
+  };
+
   return (
     <>
-      {/* Top bar */}
-      <div className="bg-navy text-white text-sm py-2 hidden md:block">
-        <div className="max-w-7xl mx-auto px-6 flex items-center justify-between">
+      {/* Top Bar */}
+      <div className="bg-navy text-white text-xs py-2 hidden md:block border-b border-navy-light/40">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between">
           <div className="flex items-center gap-6">
             <a
               href={`tel:${SCHOOL_INFO.phones[0]}`}
               className="flex items-center gap-1.5 hover:text-gold-light transition-colors"
             >
-              <Phone size={13} /> {SCHOOL_INFO.phones[0]}
+              <Phone size={13} className="text-gold-light" /> {SCHOOL_INFO.phones[0]}
             </a>
             <a
               href={`mailto:${SCHOOL_INFO.emails[1]}`}
               className="flex items-center gap-1.5 hover:text-gold-light transition-colors"
             >
-              <Mail size={13} /> {SCHOOL_INFO.emails[1]}
+              <Mail size={13} className="text-gold-light" /> {SCHOOL_INFO.emails[1]}
             </a>
           </div>
-          <span className="text-white/60 font-medium tracking-wide">
-            {SCHOOL_INFO.location}
-          </span>
+          <div className="flex items-center gap-4 text-white/70">
+            <span>{SCHOOL_INFO.nepaliName}</span>
+            <span>•</span>
+            <span className="text-gold-light font-medium">{SCHOOL_INFO.location}</span>
+          </div>
         </div>
       </div>
 
-      {/* Main Navbar */}
+      {/* Main Sticky Header */}
       <header
         className={cn(
-          "sticky top-0 z-50 w-full transition-all duration-300",
+          "sticky top-0 z-40 w-full transition-all duration-300",
           isScrolled
             ? "bg-white/95 backdrop-blur-md shadow-md border-b border-gray-100"
             : "bg-white shadow-sm"
@@ -127,88 +182,107 @@ export default function Navbar() {
         <nav
           className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8"
           role="navigation"
-          aria-label="Main navigation"
+          aria-label="Main Navigation"
         >
-          <div className="flex items-center justify-between h-18 py-3">
+          <div className="flex items-center justify-between h-20">
             {/* Logo */}
             <Link href="/" className="flex items-center gap-3 group" aria-label="JHSS Home">
-              <div className="relative w-12 h-12 rounded-full overflow-hidden ring-2 ring-gold/20 group-hover:ring-gold/50 transition-all duration-300 shadow-sm">
+              <div className="relative w-12 h-12 rounded-full overflow-hidden ring-2 ring-gold/30 group-hover:ring-gold transition-all duration-300 shadow-sm bg-white flex-shrink-0">
                 <Image
                   src="/assets/logo/jhss-logo3_1.png"
                   alt="JHSS Logo"
                   fill
                   sizes="48px"
-                  className="object-contain p-1"
+                  className="object-contain p-0.5"
                   priority
                 />
               </div>
               <div>
-                <div className="text-base font-bold text-navy leading-tight tracking-tight">
+                <div className="text-base sm:text-lg font-display font-black text-navy leading-tight tracking-tight">
                   {SCHOOL_INFO.shortName}
                 </div>
-                <div className="text-xs text-gray-500 leading-tight hidden sm:block">
+                <div className="text-[11px] text-gray-500 font-medium leading-tight hidden sm:block">
                   Gaindakot, Nawalparasi
                 </div>
               </div>
             </Link>
 
-            {/* Desktop Nav */}
-            <div className="hidden lg:flex items-center gap-1">
-              {NAV_LINKS.map((link) => (
-                <div
-                  key={link.label}
-                  className="relative group"
-                  onMouseEnter={() => link.children && setOpenDropdown(link.label)}
-                  onMouseLeave={() => setOpenDropdown(null)}
-                >
-                  <Link
-                    href={link.href}
-                    className={cn(
-                      "flex items-center gap-1 px-3.5 py-2 rounded-lg text-sm font-medium transition-all duration-200",
-                      "text-gray-700 hover:text-navy hover:bg-navy/5"
-                    )}
+            {/* Desktop Navigation */}
+            <div className="hidden lg:flex items-center gap-0.5 xl:gap-1">
+              {NAV_LINKS.map((link) => {
+                const active = isLinkActive(link);
+                return (
+                  <div
+                    key={link.label}
+                    className="relative"
+                    onMouseEnter={() => link.children && setOpenDropdown(link.label)}
+                    onMouseLeave={() => setOpenDropdown(null)}
                   >
-                    {link.label}
-                    {link.children && (
-                      <ChevronDown
-                        size={14}
-                        className={cn(
-                          "transition-transform duration-200",
-                          openDropdown === link.label && "rotate-180"
-                        )}
-                      />
-                    )}
-                  </Link>
+                    <Link
+                      href={link.href}
+                      className={cn(
+                        "flex items-center gap-1 px-3 py-2 rounded-lg text-xs xl:text-sm font-semibold transition-all duration-200",
+                        active
+                          ? "text-navy bg-navy/8 font-bold"
+                          : "text-gray-700 hover:text-navy hover:bg-navy/5"
+                      )}
+                    >
+                      {link.label}
+                      {link.children && (
+                        <ChevronDown
+                          size={13}
+                          className={cn(
+                            "transition-transform duration-200 text-gray-400",
+                            openDropdown === link.label && "rotate-180 text-navy"
+                          )}
+                        />
+                      )}
+                    </Link>
 
-                  {/* Dropdown */}
-                  {link.children && openDropdown === link.label && (
-                    <div className="absolute top-full left-0 pt-1 z-50">
-                      <div className="bg-white rounded-xl shadow-xl border border-gray-100 py-2 min-w-[200px] animate-scale-in">
-                        {link.children.map((child) => (
-                          <Link
-                            key={child.label}
-                            href={child.href}
-                            className="block px-4 py-2.5 text-sm text-gray-700 hover:text-navy hover:bg-navy/5 transition-colors"
-                            onClick={() => setOpenDropdown(null)}
-                          >
-                            {child.label}
-                          </Link>
-                        ))}
+                    {/* Dropdown Menu */}
+                    {link.children && openDropdown === link.label && (
+                      <div className="absolute top-full left-0 pt-1.5 z-50 animate-scale-in">
+                        <div className="bg-white rounded-2xl shadow-2xl border border-gray-100 p-2 min-w-[260px]">
+                          {link.children.map((child) => {
+                            const isChildActive = pathname === child.href;
+                            return (
+                              <Link
+                                key={child.label}
+                                href={child.href}
+                                className={cn(
+                                  "block px-3.5 py-2.5 rounded-xl transition-all duration-150",
+                                  isChildActive
+                                    ? "bg-navy text-white"
+                                    : "hover:bg-gray-50 text-gray-700 hover:text-navy"
+                                )}
+                                onClick={() => setOpenDropdown(null)}
+                              >
+                                <div className={cn("text-xs font-bold", isChildActive ? "text-white" : "text-navy")}>
+                                  {child.label}
+                                </div>
+                                {child.desc && (
+                                  <div className={cn("text-[11px] mt-0.5 truncate", isChildActive ? "text-white/80" : "text-gray-400")}>
+                                    {child.desc}
+                                  </div>
+                                )}
+                              </Link>
+                            );
+                          })}
+                        </div>
                       </div>
-                    </div>
-                  )}
-                </div>
-              ))}
+                    )}
+                  </div>
+                );
+              })}
             </div>
 
-            {/* Authentication & User Controls */}
-            <div className="flex items-center gap-3">
+            {/* Auth Controls & Portal CTA */}
+            <div className="flex items-center gap-2 sm:gap-3">
               {user ? (
-                /* Authenticated User Menu */
                 <div className="relative">
                   <button
                     onClick={() => setUserDropdownOpen(!userDropdownOpen)}
-                    className="flex items-center gap-2.5 p-1.5 pr-3 rounded-full border border-gray-200 bg-gray-50 hover:bg-gray-100 transition-all cursor-pointer"
+                    className="flex items-center gap-2 p-1.5 pr-3 rounded-full border border-gray-200 bg-gray-50 hover:bg-gray-100 transition-all cursor-pointer"
                   >
                     <div className="w-8 h-8 rounded-full bg-navy text-gold-light flex items-center justify-center text-xs font-bold font-display shadow-sm">
                       {userProfile?.photoURL ? (
@@ -224,213 +298,156 @@ export default function Navbar() {
                       )}
                     </div>
                     <div className="hidden sm:block text-left">
-                      <div className="text-xs font-bold text-navy leading-tight truncate max-w-[120px]">
+                      <div className="text-xs font-bold text-navy leading-tight truncate max-w-[100px]">
                         {userProfile?.fullName || "Account"}
                       </div>
                       <div className="text-[10px] font-semibold text-gold uppercase leading-tight">
                         {userProfile?.role || "Member"}
                       </div>
                     </div>
-                    <ChevronDown size={14} className="text-gray-500" />
+                    <ChevronDown size={13} className="text-gray-500" />
                   </button>
 
                   {userDropdownOpen && (
                     <div className="absolute right-0 mt-2 w-56 bg-white rounded-2xl shadow-2xl border border-gray-100 py-2 z-50 animate-scale-in">
                       <div className="px-4 py-2.5 border-b border-gray-100">
-                        <div className="font-bold text-navy text-sm truncate">
-                          {userProfile?.fullName || user.displayName || "User"}
+                        <div className="font-bold text-navy text-xs truncate">
+                          {userProfile?.fullName || user.email}
                         </div>
-                        <div className="text-gray-400 text-xs truncate">{user.email}</div>
-                        <span className="inline-block mt-1 px-2 py-0.5 rounded bg-gold/10 text-gold text-[10px] font-bold uppercase">
-                          {userProfile?.role || "student"}
-                        </span>
+                        <div className="text-[10px] text-gray-500 truncate">{user.email}</div>
                       </div>
-
                       <Link
                         href="/dashboard"
-                        className="flex items-center gap-2.5 px-4 py-2.5 text-sm text-gray-700 hover:text-navy hover:bg-navy/5 transition-colors font-medium"
+                        className="flex items-center gap-2.5 px-4 py-2 text-xs font-medium text-gray-700 hover:text-navy hover:bg-gray-50 transition-colors"
                         onClick={() => setUserDropdownOpen(false)}
                       >
-                        <LayoutDashboard size={16} className="text-navy" />
-                        My Dashboard
+                        <LayoutDashboard size={14} className="text-gold" /> My Dashboard
                       </Link>
-
                       <Link
                         href="/portal/student"
-                        className="flex items-center gap-2.5 px-4 py-2.5 text-sm text-gray-700 hover:text-navy hover:bg-navy/5 transition-colors font-medium"
+                        className="flex items-center gap-2.5 px-4 py-2 text-xs font-medium text-gray-700 hover:text-navy hover:bg-gray-50 transition-colors"
                         onClick={() => setUserDropdownOpen(false)}
                       >
-                        <GraduationCap size={16} className="text-navy" />
-                        Student Marksheet
+                        <GraduationCap size={14} className="text-navy" /> Results / Marksheet
                       </Link>
-
-                      <div className="border-t border-gray-100 my-1" />
-
                       <button
                         onClick={handleLogout}
-                        className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-crimson hover:bg-red-50 transition-colors font-medium text-left cursor-pointer"
+                        className="w-full flex items-center gap-2.5 px-4 py-2 text-xs font-medium text-crimson hover:bg-red-50 transition-colors text-left"
                       >
-                        <LogOut size={16} />
-                        Sign Out
+                        <LogOut size={14} /> Sign Out
                       </button>
                     </div>
                   )}
                 </div>
               ) : (
-                /* Unauthenticated Buttons */
                 <div className="flex items-center gap-2">
                   <Link
-                    href="/login"
-                    className="hidden sm:inline-flex items-center gap-1.5 px-4 py-2 rounded-full text-xs font-bold text-navy hover:text-gold hover:bg-navy/5 transition-colors"
+                    href="/portal/student"
+                    className="hidden sm:inline-flex items-center gap-1.5 px-4 py-2 rounded-full border border-navy/20 text-navy text-xs font-bold hover:bg-navy/5 transition-all"
                   >
-                    <User size={14} /> Sign In
+                    <GraduationCap size={14} className="text-gold" /> Result Portal
                   </Link>
                   <Link
-                    href="/register"
-                    className="hidden sm:flex items-center gap-2 px-5 py-2.5 rounded-full text-xs font-bold text-white bg-navy hover:bg-gold shadow-navy transition-all duration-200 hover:shadow-lg hover:-translate-y-0.5 cursor-pointer"
-                    id="student-portal-btn"
+                    href="/login"
+                    className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-navy text-white text-xs font-bold hover:bg-gold hover:text-navy transition-all shadow-sm"
                   >
-                    <Sparkles size={14} className="text-gold-light" />
-                    Register
+                    <User size={13} /> Sign In
                   </Link>
                 </div>
               )}
 
-              {/* Mobile menu toggle */}
+              {/* Mobile Menu Toggle Button */}
               <button
-                className="lg:hidden p-2 rounded-lg text-gray-700 hover:bg-gray-100 transition-colors"
                 onClick={() => setMobileOpen(!mobileOpen)}
-                aria-label={mobileOpen ? "Close menu" : "Open menu"}
-                aria-expanded={mobileOpen}
-                aria-controls="mobile-menu"
+                className="lg:hidden p-2 rounded-xl text-navy hover:bg-gray-100 transition-colors cursor-pointer"
+                aria-label="Toggle navigation menu"
               >
-                {mobileOpen ? <X size={22} /> : <Menu size={22} />}
+                {mobileOpen ? <X size={24} /> : <Menu size={24} />}
               </button>
             </div>
           </div>
         </nav>
 
-        {/* Gold accent underline */}
-        <div className="h-0.5 bg-gradient-to-r from-transparent via-gold to-transparent opacity-30" />
-      </header>
-
-      {/* Mobile Drawer */}
-      <div
-        id="mobile-menu"
-        className={cn(
-          "fixed inset-0 z-40 lg:hidden transition-opacity duration-300",
-          mobileOpen ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"
-        )}
-        aria-hidden={!mobileOpen}
-      >
-        {/* Backdrop */}
-        <div
-          className="absolute inset-0 bg-navy-dark/60 backdrop-blur-sm"
-          onClick={() => setMobileOpen(false)}
-        />
-        {/* Panel */}
-        <div
-          className={cn(
-            "absolute top-0 right-0 h-full w-80 max-w-full bg-white shadow-2xl transition-transform duration-300 flex flex-col",
-            mobileOpen ? "translate-x-0" : "translate-x-full"
-          )}
-        >
-          <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
-            <span className="font-bold text-navy">{SCHOOL_INFO.shortName}</span>
-            <button
-              onClick={() => setMobileOpen(false)}
-              className="p-2 rounded-lg hover:bg-gray-100 text-gray-600"
-              aria-label="Close mobile menu"
-            >
-              <X size={20} />
-            </button>
-          </div>
-
-          <div className="flex-1 overflow-y-auto py-4 px-3">
-            {/* User card if logged in */}
-            {user && (
-              <div className="mb-4 p-3 bg-gray-50 rounded-2xl border border-gray-100">
-                <div className="font-bold text-navy text-sm">
-                  {userProfile?.fullName || user.email}
-                </div>
-                <div className="text-xs text-gold font-semibold uppercase">
-                  {userProfile?.role || "Member"}
-                </div>
-                <Link
-                  href="/dashboard"
-                  className="mt-2 block text-xs font-bold text-navy hover:underline"
-                  onClick={() => setMobileOpen(false)}
-                >
-                  Go to Dashboard &rarr;
-                </Link>
-              </div>
-            )}
-
-            {NAV_LINKS.map((link) => (
-              <div key={link.label}>
-                <Link
-                  href={link.href}
-                  className="flex items-center justify-between px-4 py-3 rounded-lg text-sm font-medium text-gray-800 hover:text-navy hover:bg-navy/5 transition-colors"
-                  onClick={() => {
-                    if (!link.children) setMobileOpen(false);
-                  }}
-                >
-                  {link.label}
-                </Link>
-                {link.children && (
-                  <div className="ml-4 border-l-2 border-gold/20 pl-3 mb-1">
-                    {link.children.map((child) => (
+        {/* Mobile Slide-Out Menu */}
+        {mobileOpen && (
+          <div className="lg:hidden fixed inset-x-0 top-20 bottom-0 bg-white z-50 overflow-y-auto border-t border-gray-100 animate-fade-in p-6">
+            <div className="space-y-3 pb-24">
+              {NAV_LINKS.map((link) => {
+                const isExpanded = mobileExpandedDropdown === link.label;
+                const active = isLinkActive(link);
+                return (
+                  <div key={link.label} className="border-b border-gray-100 pb-2">
+                    {link.children ? (
+                      <div>
+                        <button
+                          onClick={() =>
+                            setMobileExpandedDropdown(isExpanded ? null : link.label)
+                          }
+                          className={cn(
+                            "w-full flex items-center justify-between py-2 text-sm font-bold",
+                            active ? "text-navy" : "text-gray-800"
+                          )}
+                        >
+                          <span>{link.label}</span>
+                          <ChevronDown
+                            size={16}
+                            className={cn(
+                              "transition-transform duration-200 text-gray-400",
+                              isExpanded && "rotate-180 text-navy"
+                            )}
+                          />
+                        </button>
+                        {isExpanded && (
+                          <div className="pl-3 py-2 space-y-2 bg-gray-50 rounded-xl my-1">
+                            {link.children.map((child) => (
+                              <Link
+                                key={child.label}
+                                href={child.href}
+                                className="block py-1.5 text-xs font-medium text-gray-600 hover:text-navy"
+                                onClick={() => setMobileOpen(false)}
+                              >
+                                {child.label}
+                              </Link>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    ) : (
                       <Link
-                        key={child.label}
-                        href={child.href}
-                        className="block px-3 py-2 text-sm text-gray-600 hover:text-navy hover:bg-navy/5 rounded-lg transition-colors"
+                        href={link.href}
+                        className={cn(
+                          "block py-2 text-sm font-bold",
+                          active ? "text-navy" : "text-gray-800"
+                        )}
                         onClick={() => setMobileOpen(false)}
                       >
-                        {child.label}
+                        {link.label}
                       </Link>
-                    ))}
+                    )}
                   </div>
-                )}
-              </div>
-            ))}
-          </div>
+                );
+              })}
 
-          <div className="p-5 border-t border-gray-100 space-y-3">
-            {user ? (
-              <button
-                onClick={handleLogout}
-                className="flex items-center justify-center gap-2 w-full px-5 py-3 rounded-full text-sm font-semibold text-white bg-crimson hover:bg-red-700 transition-colors cursor-pointer"
-              >
-                <LogOut size={16} />
-                Sign Out
-              </button>
-            ) : (
-              <div className="space-y-2">
+              <div className="pt-4 flex flex-col gap-2">
                 <Link
-                  href="/login"
-                  className="flex items-center justify-center gap-2 w-full px-5 py-2.5 rounded-full text-sm font-semibold text-navy bg-gray-100 hover:bg-gray-200 transition-colors"
+                  href="/admissions"
+                  className="w-full text-center py-3 rounded-full bg-gold text-navy font-bold text-xs shadow-md"
                   onClick={() => setMobileOpen(false)}
                 >
-                  <User size={15} />
-                  Sign In
+                  Admissions 2083
                 </Link>
                 <Link
-                  href="/register"
-                  className="flex items-center justify-center gap-2 w-full px-5 py-2.5 rounded-full text-sm font-semibold text-white bg-navy hover:bg-navy-light transition-colors"
+                  href="/portal/student"
+                  className="w-full text-center py-3 rounded-full bg-navy text-white font-bold text-xs shadow-md"
                   onClick={() => setMobileOpen(false)}
                 >
-                  <Sparkles size={15} className="text-gold-light" />
-                  Create Account
+                  Student Marksheet Portal
                 </Link>
               </div>
-            )}
-            <div className="text-xs text-gray-500 text-center space-y-1 pt-2">
-              <p>{SCHOOL_INFO.phones[0]}</p>
-              <p>{SCHOOL_INFO.emails[1]}</p>
             </div>
           </div>
-        </div>
-      </div>
+        )}
+      </header>
     </>
   );
 }

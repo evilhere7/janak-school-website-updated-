@@ -5,6 +5,7 @@ import { sanitizeHtml, sanitizeText } from "@/lib/security/sanitize";
 
 export interface SchoolEvent {
   id: string;
+  slug?: string;
   title: string;
   category: string;
   date: string;
