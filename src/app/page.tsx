@@ -23,6 +23,7 @@ import {
 } from "lucide-react";
 import { SCHOOL_INFO, NOTICES, NEWS_ITEMS, FACILITIES, GALLERY_ITEMS, STATS } from "@/lib/data/schoolData";
 import { cn, formatDate } from "@/lib/utils";
+import Hero from "@/components/home/Hero";
 
 // ─── Icon map ───────────────────────────────────────────
 const ICON_MAP: Record<string, React.ReactNode> = {
@@ -62,171 +63,6 @@ function SectionHeader({ label, title, subtitle, light = false }: {
         </p>
       )}
     </div>
-  );
-}
-
-// ─── Hero Section ────────────────────────────────────────
-function HeroSection() {
-  return (
-    <section
-      className="relative min-h-screen flex items-center justify-center overflow-hidden hero-gradient"
-      aria-label="JHSS Hero"
-    >
-      {/* Decorative circles */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div
-          className="absolute -top-32 -right-32 w-[600px] h-[600px] rounded-full opacity-10"
-          style={{ background: "radial-gradient(circle, #c8921a 0%, transparent 70%)" }}
-        />
-        <div
-          className="absolute -bottom-48 -left-24 w-[500px] h-[500px] rounded-full opacity-8"
-          style={{ background: "radial-gradient(circle, #1a3366 0%, transparent 70%)" }}
-        />
-        {/* Grid pattern */}
-        <div
-          className="absolute inset-0 opacity-5"
-          style={{
-            backgroundImage: "linear-gradient(rgba(255,255,255,0.1) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.1) 1px, transparent 1px)",
-            backgroundSize: "60px 60px"
-          }}
-        />
-      </div>
-
-      <div className="relative z-10 max-w-7xl mx-auto px-6 py-32 grid lg:grid-cols-2 gap-16 items-center">
-        {/* Text content */}
-        <div className="text-white animate-fade-up">
-          {/* Badge */}
-          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full glass mb-8 text-sm">
-            <span className="w-2 h-2 rounded-full bg-gold-light animate-pulse" />
-            <span className="text-white/80">Est. {SCHOOL_INFO.establishedBS} · Gaindakot, Nawalparasi</span>
-          </div>
-
-          {/* Logo + Name */}
-          <div className="flex items-center gap-4 mb-6">
-            <div className="relative w-20 h-20 rounded-full overflow-hidden ring-4 ring-gold/30 shadow-gold flex-shrink-0">
-              <Image
-                src="/assets/logo/jhss-logo3_1.png"
-                alt="JHSS Logo"
-                fill
-                className="object-contain p-1.5"
-                priority
-              />
-            </div>
-            <div>
-              <div className="text-gold-light text-sm font-semibold tracking-widest uppercase mb-1">
-                {SCHOOL_INFO.shortName}
-              </div>
-              <h1 className="font-display text-2xl sm:text-3xl font-bold leading-tight text-white">
-                {SCHOOL_INFO.name}
-              </h1>
-              <p className="text-white/50 text-sm mt-0.5">{SCHOOL_INFO.nepaliName}</p>
-            </div>
-          </div>
-
-          <p className="font-display text-4xl sm:text-5xl lg:text-6xl font-bold leading-tight mb-6">
-            <span className="text-gradient-gold">&ldquo;</span>
-            <span className="text-white">{SCHOOL_INFO.tagline}</span>
-            <span className="text-gradient-gold">&rdquo;</span>
-          </p>
-
-          <p className="text-white/70 text-lg leading-relaxed mb-10 max-w-xl">
-            One of Nepal&apos;s oldest, most reputed institutions serving{" "}
-            <span className="text-gold-light font-semibold">1,500+</span> learners from
-            Play Group to Class 12 in both English and Nepali medium.
-          </p>
-
-          <div className="flex flex-wrap gap-4">
-            <Link
-              href="/about"
-              className="inline-flex items-center gap-2 px-7 py-3.5 rounded-full bg-gold text-white font-semibold text-sm hover:bg-gold-light transition-all duration-200 shadow-gold hover:shadow-lg hover:-translate-y-0.5"
-              id="hero-explore-btn"
-            >
-              Explore Our School <ArrowRight size={16} />
-            </Link>
-            <Link
-              href="/portal/student"
-              className="inline-flex items-center gap-2 px-7 py-3.5 rounded-full glass text-white font-semibold text-sm hover:bg-white/15 transition-all duration-200 hover:-translate-y-0.5"
-              id="hero-portal-btn"
-            >
-              <GraduationCap size={16} /> Student Portal
-            </Link>
-          </div>
-
-          {/* Quick stats row */}
-          <div className="flex flex-wrap gap-6 mt-12 pt-10 border-t border-white/10">
-            {STATS.map((s) => (
-              <div key={s.label}>
-                <div className="text-2xl font-bold text-gold-light">{s.value}</div>
-                <div className="text-white/50 text-xs">{s.label}</div>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* Visual panel */}
-        <div className="hidden lg:block animate-fade-up animation-delay-200">
-          <div className="relative">
-            {/* Main image */}
-            <div className="relative w-full aspect-square max-w-[480px] mx-auto">
-              <div className="absolute inset-0 rounded-3xl overflow-hidden shadow-2xl">
-                <Image
-                  src="/assets/gallery/golden-jubilee_30.jpg"
-                  alt="Shree Janak Secondary School Campus"
-                  fill
-                  className="object-cover"
-                  priority
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-navy-dark/60 to-transparent" />
-              </div>
-
-              {/* Floating cards */}
-              <div className="absolute -left-12 top-12 glass-dark rounded-2xl p-4 shadow-xl animate-float">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-xl bg-gold/20 flex items-center justify-center">
-                    <Award size={20} className="text-gold-light" />
-                  </div>
-                  <div>
-                    <div className="text-white font-bold text-sm">100% SEE</div>
-                    <div className="text-white/50 text-xs">Pass Rate</div>
-                  </div>
-                </div>
-              </div>
-
-              <div className="absolute -right-10 bottom-20 glass-dark rounded-2xl p-4 shadow-xl animate-float animation-delay-300">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-xl bg-gold/20 flex items-center justify-center">
-                    <Users size={20} className="text-gold-light" />
-                  </div>
-                  <div>
-                    <div className="text-white font-bold text-sm">1,500+</div>
-                    <div className="text-white/50 text-xs">Students</div>
-                  </div>
-                </div>
-              </div>
-
-              <div className="absolute -bottom-6 left-8 glass-dark rounded-2xl p-4 shadow-xl animate-float animation-delay-200">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-xl bg-gold/20 flex items-center justify-center">
-                    <Star size={20} className="text-gold-light" />
-                  </div>
-                  <div>
-                    <div className="text-white font-bold text-sm">65+ Years</div>
-                    <div className="text-white/50 text-xs">of Excellence</div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Scroll indicator */}
-      <div className="absolute bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2 animate-bounce">
-        <div className="w-5 h-8 rounded-full border-2 border-white/30 flex items-start justify-center p-1">
-          <div className="w-1 h-2 bg-gold rounded-full" />
-        </div>
-      </div>
-    </section>
   );
 }
 
@@ -735,7 +571,7 @@ function ContactCTA() {
 export default function HomePage() {
   return (
     <>
-      <HeroSection />
+      <Hero />
       <AnnouncementBanner />
       <AboutSection />
       <StatsSection />

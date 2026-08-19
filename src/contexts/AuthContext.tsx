@@ -344,6 +344,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     await profileService.syncProfileWithFirebase(user.uid, {
       fullName: data.fullName || userProfile?.fullName || "",
       email: user.email || "",
+      role: data.role || userProfile?.role || "student",
       phone: data.phoneNumber,
       photoURL: data.photoURL,
       studentId: data.studentId,

@@ -20,6 +20,11 @@ export const metadata: Metadata = {
     "SEE",
     "+2 Science Management Humanities",
   ],
+  icons: {
+    icon: "/assets/logo/jhss-logo3_1.png",
+    shortcut: "/assets/logo/jhss-logo3_1.png",
+    apple: "/assets/logo/jhss-logo3_1.png",
+  },
   openGraph: {
     type: "website",
     locale: "en_NP",
