@@ -1,0 +1,7 @@
+name = "janak-school-website-updated"
+main = ".open-next/worker.js"
+compatibility_date = "2025-08-20"
+compatibility_flags = ["nodejs_compat"]
+
+[assets]
+directory = ".open-next/assets"
