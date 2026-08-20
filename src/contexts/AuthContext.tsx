@@ -70,35 +70,37 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         return;
       }
 
-      // 2. Try Firestore
-      try {
-        const userDocRef = doc(db, "users", firebaseUser.uid);
-        const userDocSnap = await getDoc(userDocRef);
+      // 2. Try Firestore if db is available
+      if (db) {
+        try {
+          const userDocRef = doc(db, "users", firebaseUser.uid);
+          const userDocSnap = await getDoc(userDocRef);
 
-        if (userDocSnap.exists()) {
-          const data = userDocSnap.data() as UserProfile;
-          setUserProfile(data);
+          if (userDocSnap.exists()) {
+            const data = userDocSnap.data() as UserProfile;
+            setUserProfile(data);
 
-          // Async sync to Supabase
-          profileService
-            .syncProfileWithFirebase(firebaseUser.uid, {
-              fullName: data.fullName,
-              email: data.email,
-              role: data.role,
-              phone: data.phoneNumber,
-              photoURL: data.photoURL,
-              studentId: data.studentId,
-              grade: data.grade,
-              employeeId: data.employeeId,
-              department: data.department,
-              wardName: data.wardName,
-              wardStudentId: data.wardStudentId,
-            })
-            .catch(() => {});
-          return;
+            // Async sync to Supabase
+            profileService
+              .syncProfileWithFirebase(firebaseUser.uid, {
+                fullName: data.fullName,
+                email: data.email,
+                role: data.role,
+                phone: data.phoneNumber,
+                photoURL: data.photoURL,
+                studentId: data.studentId,
+                grade: data.grade,
+                employeeId: data.employeeId,
+                department: data.department,
+                wardName: data.wardName,
+                wardStudentId: data.wardStudentId,
+              })
+              .catch(() => {});
+            return;
+          }
+        } catch (firestoreErr: any) {
+          console.debug("Firestore offline notice, using auth profile:", firestoreErr?.message);
         }
-      } catch (firestoreErr: any) {
-        console.debug("Firestore offline notice, using auth profile:", firestoreErr?.message);
       }
 
       // 3. Fallback standard profile from Firebase User credentials
@@ -133,12 +135,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const refreshProfile = useCallback(async () => {
-    if (auth.currentUser) {
+    if (auth && auth.currentUser) {
       await fetchUserProfile(auth.currentUser);
     }
   }, [fetchUserProfile]);
 
   useEffect(() => {
+    if (!auth) {
+      setLoading(false);
+      return;
+    }
+
     const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
       setUser(currentUser);
       if (currentUser) {
@@ -155,6 +162,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   // Secure Login with Rate Limiting & Audit Logging
   const login = async (email: string, password: string) => {
     const trimmedEmail = email.trim().toLowerCase();
+
+    if (!auth) {
+      throw new Error("Authentication service is currently unavailable.");
+    }
 
     // Rate Limit Check
     const rateLimit = checkRateLimit(trimmedEmail, "LOGIN");
@@ -203,6 +214,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   ) => {
     const trimmedEmail = email.trim().toLowerCase();
 
+    if (!auth) {
+      throw new Error("Authentication service is currently unavailable.");
+    }
+
     // Rate Limit Check for registrations
     const rateLimit = checkRateLimit(trimmedEmail, "REGISTRATION");
     if (!rateLimit.allowed) {
@@ -228,10 +243,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         isActive: true,
       };
 
-      await setDoc(doc(db, "users", newUser.uid), {
-        ...newProfile,
-        serverTimestamp: serverTimestamp(),
-      });
+      if (db) {
+        await setDoc(doc(db, "users", newUser.uid), {
+          ...newProfile,
+          serverTimestamp: serverTimestamp(),
+        });
+      }
 
       // Sync to Supabase PostgreSQL database
       await profileService.syncProfileWithFirebase(newUser.uid, {
@@ -264,7 +281,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   // Secure Logout
   const logout = async () => {
-    const currentUser = auth.currentUser;
+    const currentUser = auth?.currentUser;
     setLoading(true);
     try {
       if (currentUser) {
@@ -275,7 +292,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           severity: "info",
         });
       }
-      await signOut(auth);
+      if (auth) {
+        await signOut(auth);
+      }
       setUser(null);
       setUserProfile(null);
     } finally {
@@ -286,6 +305,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   // Password Reset with Rate Limiting
   const resetPassword = async (email: string) => {
     const trimmedEmail = email.trim().toLowerCase();
+
+    if (!auth) {
+      throw new Error("Authentication service is currently unavailable.");
+    }
 
     const rateLimit = checkRateLimit(trimmedEmail, "PASSWORD_RESET");
     if (!rateLimit.allowed) {
@@ -303,7 +326,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   // Send Email Verification Mail
   const sendEmailVerificationMail = async () => {
-    if (!auth.currentUser) {
+    if (!auth?.currentUser) {
       throw new Error("No authenticated user found.");
     }
     await sendEmailVerification(auth.currentUser);
@@ -317,7 +340,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   // Re-authenticate User with Current Password for sensitive operations
   const reauthenticateUser = async (password: string) => {
-    if (!auth.currentUser || !auth.currentUser.email) {
+    if (!auth?.currentUser || !auth.currentUser.email) {
       throw new Error("No authenticated user found.");
     }
     const credential = EmailAuthProvider.credential(auth.currentUser.email, password);
@@ -328,13 +351,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const updateProfileData = async (data: Partial<UserProfile>) => {
     if (!user) throw new Error("User must be authenticated to update profile");
 
-    const userDocRef = doc(db, "users", user.uid);
-    const updated = {
-      ...data,
-      updatedAt: new Date().toISOString(),
-    };
-
-    await updateDoc(userDocRef, updated);
+    if (db) {
+      const userDocRef = doc(db, "users", user.uid);
+      const updated = {
+        ...data,
+        updatedAt: new Date().toISOString(),
+      };
+      await updateDoc(userDocRef, updated);
+    }
 
     if (data.fullName && user) {
       await updateFirebaseProfile(user, { displayName: data.fullName });
@@ -364,7 +388,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       details: { fieldsUpdated: Object.keys(data) },
     });
 
-    setUserProfile((prev) => (prev ? { ...prev, ...updated } : null));
+    const updatedProfile = {
+      ...data,
+      updatedAt: new Date().toISOString(),
+    };
+    setUserProfile((prev) => (prev ? { ...prev, ...updatedProfile } : null));
   };
 
   const value: AuthContextType = {
